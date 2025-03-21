@@ -1,0 +1,71 @@
+# **Visual Studio Specific**
+.vs/
+*.user
+*.suo
+*.vssscc
+*.cache
+*.csproj.user
+*.pdb
+*.dbmdl
+*.log
+*.vsconfig
+
+# **Build Outputs**
+bin/
+obj/
+out/
+debug/
+release/
+
+# **Rider / JetBrains IDE Specific**
+.idea/
+*.sln.iml
+
+# **Dependency Caches**
+node_modules/
+packages/
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# **ASP.NET Temporary Files**
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# **Entity Framework Migrations**
+Migrations/
+
+# **User Secrets (Do not commit)**
+secrets.json
+*.secret.json
+
+# **Docker / Kubernetes**
+.dockerignore
+docker-compose.override.yml
+docker-compose.debug.yml
+docker-compose.yml
+
+# **Database & Logs**
+*.mdf
+*.ldf
+*.sqlite
+*.db
+*.bak
+Logs/
+logs/
+*.log
+nohup.out
+
+# **Environment Variables & Configuration**
+.env
+appsettings.Development.json
+appsettings.Local.json
+
+# **Publish and Deployment**
+publish/
+wwwroot/
+dist/
+
+# **Crash Reports**
+hs_err_pid*

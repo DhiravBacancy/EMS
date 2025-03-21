@@ -1,0 +1,27 @@
+﻿using EMS.Models;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
+
+namespace EMS.Configurations
+{
+    public class DepartmentConfiguration : IEntityTypeConfiguration<Department>
+    {
+        public void Configure(EntityTypeBuilder<Department> builder)
+        {
+            builder.HasKey(d => d.DepartmentId);
+
+            builder.Property(d => d.DepartmentId)
+                .ValueGeneratedOnAdd()
+                .IsRequired(true);
+
+            builder.Property(d => d.DepartmentName)
+                .HasMaxLength(100)
+                .IsRequired(true);
+
+            builder.HasMany(d => d.Employees)
+                .WithOne(e => e.Department)
+                .HasForeignKey(e => e.DepartmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+}
