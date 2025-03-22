@@ -13,13 +13,13 @@ namespace EMS.Models
         public string Phone { get; set; }
         public DateTime? DateOfBirth { get; set; }
         public string Address { get; set; }
-        public int DepartmentId { get; set; }
+        public int? DepartmentId { get; set; }
         public Department Department { get; set; }
-        public ICollection<Leave> Leaves { get; set; }
-        public ICollection<TimeSheet> TimeSheets { get; set; }
-        public string TechStack { get; set; }
+        public ICollection<Leave>? Leaves { get; set; }
+        public ICollection<TimeSheet>? TimeSheets { get; set; }
+        public string? TechStack { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-        public RolesEnum Role { get; set; } = RolesEnum.Employee; // Default role as Employee
+        public DateTime? UpdatedAt { get; set; }
+        public RolesEnum Role { get; set; } = RolesEnum.Employee;
     }
 }

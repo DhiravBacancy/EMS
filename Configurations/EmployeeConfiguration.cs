@@ -7,16 +7,7 @@ using System.Reflection.Emit;
 
 namespace EMS.Configurations
 {
-    // First, create a custom value generator
-    public class CurrentDateTimeGenerator : ValueGenerator<DateTime>
-    {
-        public override DateTime Next(EntityEntry entry)
-        {
-            return DateTime.Now;
-        }
 
-        public override bool GeneratesTemporaryValues => false;
-    }
     public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
     {
         public void Configure(EntityTypeBuilder<Employee> builder)
