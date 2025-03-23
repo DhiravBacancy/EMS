@@ -1,10 +1,8 @@
 ﻿using EMS.DTOs;
+using EMS.Helpers;
 using EMS.Models;
 using EMS.Service;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace EMS.Controllers
 {
@@ -19,12 +17,13 @@ namespace EMS.Controllers
             _timeSheetService = timeSheetService;
         }
 
-        // Add TimeSheet
         [HttpPost("add")]
         public async Task<IActionResult> AddTimeSheet([FromBody] AddTimeSheetDTO addTimeSheetDto)
         {
-            if (addTimeSheetDto == null)
-                return BadRequest(new { Message = "Invalid input. Please provide valid timesheet data." });
+
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
 
             var newTimeSheet = new TimeSheet
             {
@@ -39,6 +38,7 @@ namespace EMS.Controllers
                 ? Ok(new { Message = "Timesheet added successfully." })
                 : StatusCode(500, new { Message = "Internal Server Error: Failed to add timesheet." });
         }
+
 
         // Get All TimeSheets of Employee
         [HttpGet("employee/{employeeId}")]
@@ -58,8 +58,12 @@ namespace EMS.Controllers
         [HttpPut("update/{id}")]
         public async Task<IActionResult> UpdateTimeSheet(int id, [FromBody] UpdateTimeSheetDTO updateTimeSheetDto)
         {
-            if (updateTimeSheetDto == null)
+            if (!ModelState.IsValid)
                 return BadRequest(new { Message = "Invalid input. Please provide valid timesheet data." });
+
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
 
             var timeSheet = await _timeSheetService.GetByIdAsync(id);
             if (timeSheet == null)
@@ -73,6 +77,7 @@ namespace EMS.Controllers
                 ? Ok(new { Message = "Timesheet updated successfully." })
                 : StatusCode(500, new { Message = "Internal Server Error: Failed to update timesheet." });
         }
+
 
         // Delete TimeSheet
         [HttpDelete("delete/{id}")]

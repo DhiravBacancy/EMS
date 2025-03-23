@@ -1,5 +1,4 @@
-﻿
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EMS.Models
 {
@@ -12,8 +11,9 @@ namespace EMS.Models
         public TimeSpan StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
 
-        [Column(TypeName = "DECIMAL(5,2)")]
-        public decimal? TotalHours { get; set; }
+        [NotMapped] // Ensures this is NOT stored in the database
+        public decimal? TotalHours => EndTime.HasValue ? (decimal)(EndTime.Value - StartTime).TotalHours : null;
+
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

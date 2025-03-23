@@ -2,8 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using EMS.DTOs;
 using EMS.Models;
-using Microsoft.AspNetCore.Authorization;
-using System.Linq;
+using EMS.Helpers;
 
 namespace EMS.Controllers
 {
@@ -21,8 +20,9 @@ namespace EMS.Controllers
         [HttpPost("Add")]
         public async Task<IActionResult> AddAdmin([FromBody] AddAdminDTO addAdminDto)
         {
-            if (addAdminDto == null)
-                return BadRequest(new { Message = "Invalid data" });
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
 
             var existingAdmin = (await _adminService.GetByMultipleConditionsAsync(
                 new List<FilterDTO> { new FilterDTO { PropertyName = "Email", Value = addAdminDto.Email } }
@@ -35,6 +35,7 @@ namespace EMS.Controllers
             {
                 FirstName = addAdminDto.FirstName,
                 LastName = addAdminDto.LastName,
+                Passsword = BCrypt.Net.BCrypt.HashPassword(addAdminDto.Passsword),
                 Email = addAdminDto.Email,
                 Phone = addAdminDto.Phone,
             };
@@ -68,6 +69,10 @@ namespace EMS.Controllers
         [HttpPut("Update/{id}")]
         public async Task<IActionResult> UpdateAdmin(int id, [FromBody] UpdateAdminDTO updateAdminDto)
         {
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
+
             var existingAdmin = await _adminService.GetByIdAsync(id);
             if (existingAdmin == null)
                 return NotFound(new { Message = "Admin not found" });
@@ -98,9 +103,10 @@ namespace EMS.Controllers
             if (admin == null)
                 return NotFound(new { Message = "Admin not found" });
 
-            await _adminService.DeleteAsync(admin.AdminId);
-            return Ok(new { Message = "Admin deleted successfully" });
+            if (await _adminService.DeleteAsync(admin.AdminId))
+                return Ok(new { Message = "Admin deleted successfully" });
+            else
+                return StatusCode(500, new { Message = "Failed to update Admin due to an internal server error. "});
         }
     }
-
 }

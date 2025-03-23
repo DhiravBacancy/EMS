@@ -19,28 +19,30 @@ namespace EMS.Configurations
 
             builder.Property(e => e.FirstName)
                 .HasMaxLength(100)
-                .IsRequired();
+                .IsRequired(true);
 
             builder.Property(e => e.LastName)
                 .HasMaxLength(100)
-                .IsRequired();
+                .IsRequired(true);
 
             builder.Property(e => e.Email)
-                .IsRequired()
+                .IsRequired(true)
                 .HasMaxLength(255);
 
             builder.HasIndex(e => e.Email)
-                .IsUnique();
+                .IsUnique(true);
 
             builder.Property(e => e.Phone)
                 .HasMaxLength(15)
-                .IsRequired();
+                .IsRequired(true);
 
             builder.Property(e => e.DateOfBirth)
                  .IsRequired(false);
 
             builder.Property(e => e.Address)
-                .IsRequired(false);
+                .IsRequired(false)
+                .HasMaxLength(500);  // Adding a max length if necessary
+
 
             builder.HasOne(e => e.Department)
                 .WithMany(d => d.Employees)
@@ -54,7 +56,8 @@ namespace EMS.Configurations
 
 
             builder.Property(e => e.TechStack)
-                .IsRequired(false);
+                .IsRequired(false)
+                .HasMaxLength(200);  // Adding a max length if necessary
 
             // Store the RoleEnum as String in the database
             builder.Property(e => e.Role)

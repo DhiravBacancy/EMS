@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EMS.Helpers;
 
 namespace EMS.Controllers
 {
@@ -24,8 +25,9 @@ namespace EMS.Controllers
         [HttpPost]
         public async Task<IActionResult> AddDepartment([FromBody] AddOrUpdateDepartmentDTO departmentDto)
         {
-            if (departmentDto == null || string.IsNullOrWhiteSpace(departmentDto.DepartmentName))
-                return BadRequest(new { message = "Invalid input. Please provide valid department data." });
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
 
             // Check if department already exists
             var existingDepartment = (await _departmentService.GetByMultipleConditionsAsync(new List<FilterDTO>
@@ -75,8 +77,10 @@ namespace EMS.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateDepartment(int id, [FromBody] AddOrUpdateDepartmentDTO departmentDto)
         {
-            if (departmentDto == null || string.IsNullOrWhiteSpace(departmentDto.DepartmentName))
-                return BadRequest(new { message = "Invalid input. Please provide valid department data." });
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
+
 
             var existingDepartment = await _departmentService.GetByIdAsync(id);
             if (existingDepartment == null)

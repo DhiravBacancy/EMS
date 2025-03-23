@@ -1,4 +1,5 @@
 ﻿using EMS.DTOs;
+using EMS.Helpers;
 using EMS.Models;
 using EMS.Service;
 using Microsoft.AspNetCore.Mvc;
@@ -21,10 +22,10 @@ namespace EMS.Controllers
         [HttpPost]
         public async Task<IActionResult> AddEmployee([FromBody] AddEmployeeDTO employeeDto)
         {
-            if (employeeDto == null)
-                return BadRequest(new { message = "Invalid request" });
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
 
-            // Check if email already exists using the new filter method
             var existingEmployee = (await _employeeService.GetByMultipleConditionsAsync(
                 new List<FilterDTO>
                 {
@@ -82,6 +83,12 @@ namespace EMS.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEmployee(int id, [FromBody] UdpateEmployeeDTO updateEmployeeDto)
         {
+
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
+
+
             var existingEmployee = await _employeeService.GetByIdAsync(id);
             if (existingEmployee == null)
                 return NotFound(new { message = "Employee not found" });
@@ -123,9 +130,10 @@ namespace EMS.Controllers
             var employee = await _employeeService.GetByIdAsync(id);
             if (employee == null)
                 return NotFound(new { message = "Employee not found" });
-
-            await _employeeService.DeleteAsync(employee.EmployeeId);
-            return Ok(new { message = "Employee deleted successfully" });
+            if (await _employeeService.DeleteAsync(employee.EmployeeId))
+                return Ok(new { message = "Employee deleted successfully" });
+            else
+                return StatusCode(500, new { message = "Failed to update Employee due to an internal server error." });
         }
     }
 }

@@ -28,9 +28,6 @@ namespace EMS.Configurations
             builder.Property(ts => ts.EndTime)
                .IsRequired(true);
 
-            builder.Property(ts => ts.TotalHours)
-                .IsRequired(true);
-
             builder.Property(ts => ts.Description)
                 .IsRequired(false);
 

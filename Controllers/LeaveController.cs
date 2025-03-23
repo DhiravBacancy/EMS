@@ -3,10 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using EMS.DTOs;
 using EMS.Models;
 using EMS.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using EMS.Helpers;
 
 namespace EMS.Controllers
 {
@@ -23,12 +20,14 @@ namespace EMS.Controllers
 
         // Leave Request
         [HttpPost]
-        public async Task<IActionResult> LeaveRequest([FromBody] AddLeavesDTO addLeavesDto)
+        public async Task<IActionResult> LeaveRequest([FromBody] AddLeaveDTO addLeavesDto)
         {
-            if (addLeavesDto == null)
-                return BadRequest(new { message = "Invalid input. Please provide valid leave data." });
+            
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
 
-            // Check if the leave for the given employee and department already exists
+            // Check if leave already exists for the given employee and start date
             var existingLeave = (await _leaveService.GetByMultipleConditionsAsync(new List<FilterDTO>
             {
                 new FilterDTO { PropertyName = "EmployeeId", Value = addLeavesDto.EmployeeId },
@@ -53,7 +52,7 @@ namespace EMS.Controllers
             // Add leave request to the service
             if (await _leaveService.AddAsync(newLeave))
                 return Ok(new { message = "Leave request submitted successfully." });
-
+                
             return StatusCode(500, new { message = "Failed to submit leave request due to an internal server error." });
         }
 
@@ -70,30 +69,35 @@ namespace EMS.Controllers
             return Ok(leavesOfEmployee);
         }
 
-        //[HttpPut("{employeeId}/{leaveId}")]
-        //public async Task<IActionResult> ApproveOrRejectLeave(int employeeId, int leaveId, [FromBody] LeaveApprovalDTO leaveApprovalDto)
-        //{
-        //    if (leaveApprovalDto == null)
-        //        return BadRequest(new { message = "Invalid input. Please provide valid approval details." });
+        [HttpPut("{employeeId}/{leaveId}")]
+        public async Task<IActionResult> ApproveOrRejectLeave(int employeeId, int leaveId, [FromBody] LeaveApprovalDTO leaveApprovalDto)
+        {
+            if (leaveApprovalDto == null)
+                return BadRequest(new { message = "Invalid input. Please provide valid approval details." });
 
-        //    // Fetch the leave request for the given leaveId and employeeId
-        //    var leaveRequest = (await _leaveService.GetByMultipleConditionsAsync(new List<FilterDTO>
-        //    {
-        //        new FilterDTO { PropertyName = "EmployeeId", Value = employeeId },
-        //        new FilterDTO { PropertyName = "LeaveId", Value = leaveId }
-        //    })).FirstOrDefault();
+                    // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
 
-        //    if (leaveRequest == null)
-        //        return NotFound(new { message = "Leave request not found for the given Employee and Leave ID." });
 
-        //    // Update the status of the leave based on the approval or rejection decision
-        //    leaveRequest.Status = leaveApprovalDto.IsApproved ? "Approved" : "Rejected";
-            
-        //    if (await _leaveService.UpdateAsync(leaveRequest))
-        //        return Ok(new { message = leaveApprovalDto.IsApproved ? "Leave approved successfully." : "Leave rejected successfully." });
+            // Fetch the leave request for the given leaveId and employeeId
+            var leaveRequest = (await _leaveService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "EmployeeId", Value = employeeId },
+                new FilterDTO { PropertyName = "LeaveId", Value = leaveId }
+            })).FirstOrDefault();
 
-        //    return StatusCode(500, new { message = "Failed to update leave status due to an internal server error." });
-        //}
+            if (leaveRequest == null)
+                return NotFound(new { message = "Leave request not found for the given Employee and Leave ID." });
+
+            // Update the status of the leave based on the approval or rejection decision
+            leaveRequest.Status = leaveApprovalDto.Status;
+
+            if (await _leaveService.UpdateAsync(leaveRequest))
+                return Ok(new { message = leaveApprovalDto.Status == StatusEnum.Approved? "Leave approved successfully." : "Leave rejected successfully." });
+
+            return StatusCode(500, new { message = "Failed to update leave status due to an internal server error." });
+        }
 
 
 

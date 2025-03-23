@@ -1,7 +1,6 @@
 ﻿using EMS.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Reflection.Emit;
 
 namespace EMS.Configurations
 {
@@ -16,9 +15,9 @@ namespace EMS.Configurations
                 .IsRequired(true);
 
             builder.HasOne(e => e.Employee)
-               .WithMany(l => l.Leaves)
-               .HasForeignKey(l => l.EmployeeId)
-               .OnDelete(DeleteBehavior.Cascade);
+                .WithMany(l => l.Leaves)
+                .HasForeignKey(l => l.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(l => l.StartDate)
                 .IsRequired(true);
@@ -41,7 +40,6 @@ namespace EMS.Configurations
                 .HasConversion<string>()
                 .HasMaxLength(20)
                 .IsRequired();
-
         }
     }
 }

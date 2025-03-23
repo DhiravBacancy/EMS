@@ -1,4 +1,5 @@
 ﻿using EMS.DTOs;
+using EMS.Helpers;
 using EMS.Service;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,14 +19,16 @@ namespace EMS.Controllers
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
-            if (loginDto == null)
-            {
-                return BadRequest(new { message = "Invalid request" });
-            }
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
             try
             {
                 var tokenResponse = await _authService.LoginAsync(loginDto);
-                return Ok(tokenResponse);
+                if (tokenResponse == null)
+                    return Unauthorized(new { message = "Invalid email or password"});
+                else 
+                    return Ok(tokenResponse);
             }
             catch (Exception ex)
             {
@@ -65,10 +68,9 @@ namespace EMS.Controllers
         [HttpPost]
         public async Task<IActionResult> ResetPasswordWhenNotLoggedIn([FromBody] string email)
         {
-            if (string.IsNullOrEmpty(email))
-            {
-                return BadRequest(new { message = "Email is required" });
-            }
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
             try
             {
                 var result = await _authService.ResetPasswordWhenNotLoggedIn(email);
@@ -83,10 +85,9 @@ namespace EMS.Controllers
         [HttpPost]
         public async Task<IActionResult> VerifyOTP([FromBody] OTPVerificationDTO otpDto)
         {
-            if (otpDto == null || string.IsNullOrEmpty(otpDto.Email) || string.IsNullOrEmpty(otpDto.EnteredOTP))
-            {
-                return BadRequest(new { message = "Invalid request" });
-            }
+            // Call the validation helper method to check for ModelState errors
+            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
+            if (validationResult != null) return validationResult;
             try
             {
                 var result = await _authService.VerifyOTP(otpDto.Email, otpDto.EnteredOTP);

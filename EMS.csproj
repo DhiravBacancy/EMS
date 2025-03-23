@@ -9,6 +9,7 @@
 	<ItemGroup>
 		<!-- BCrypt for hashing passwords -->
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="EPPlus" Version="7.7.0" />
 
 		<!-- MailKit for sending emails -->
 		<PackageReference Include="MailKit" Version="4.11.0" />
