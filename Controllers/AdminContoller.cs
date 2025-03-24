@@ -4,6 +4,7 @@ using EMS.DTOs;
 using EMS.Models;
 using EMS.Helpers;
 
+
 namespace EMS.Controllers
 {
     [Route("api/[controller]")]
@@ -20,16 +21,14 @@ namespace EMS.Controllers
         [HttpPost("Add")]
         public async Task<IActionResult> AddAdmin([FromBody] AddAdminDTO addAdminDto)
         {
-            // Call the validation helper method to check for ModelState errors
-            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
-            if (validationResult != null) return validationResult;
+            DTOValidationHelper.ValidateModelState(ModelState); // Throws validation error if invalid
 
             var existingAdmin = (await _adminService.GetByMultipleConditionsAsync(
                 new List<FilterDTO> { new FilterDTO { PropertyName = "Email", Value = addAdminDto.Email } }
             )).FirstOrDefault();
 
             if (existingAdmin != null)
-                return BadRequest(new { Message = "Email is already in use" });
+                throw new CustomException("Email is already in use", 400);
 
             var newAdmin = new Admin
             {
@@ -40,10 +39,8 @@ namespace EMS.Controllers
                 Phone = addAdminDto.Phone,
             };
 
-            if (await _adminService.AddAsync(newAdmin))
-                return Ok(new { Message = "Admin added successfully" });
-            else
-                return StatusCode(500, new { Message = "Failed to add Admin due to an internal server error." });
+            await _adminService.AddAsync(newAdmin);
+            return Ok("Admin added successfully"); // ResponseWrapper will wrap this
         }
 
         [HttpGet("All")]
@@ -51,7 +48,7 @@ namespace EMS.Controllers
         {
             var admins = await _adminService.GetAllAsync();
             if (admins == null || !admins.Any())
-                return NotFound(new { Message = "No Admin Found" });
+                throw new CustomException("No Admin Found", 404);
 
             return Ok(admins);
         }
@@ -61,7 +58,7 @@ namespace EMS.Controllers
         {
             var admin = await _adminService.GetByIdAsync(id);
             if (admin == null)
-                return NotFound(new { Message = "Admin not found" });
+                throw new CustomException("Admin not found", 404);
 
             return Ok(admin);
         }
@@ -69,20 +66,18 @@ namespace EMS.Controllers
         [HttpPut("Update/{id}")]
         public async Task<IActionResult> UpdateAdmin(int id, [FromBody] UpdateAdminDTO updateAdminDto)
         {
-            // Call the validation helper method to check for ModelState errors
-            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
-            if (validationResult != null) return validationResult;
+            DTOValidationHelper.ValidateModelState(ModelState);
 
             var existingAdmin = await _adminService.GetByIdAsync(id);
             if (existingAdmin == null)
-                return NotFound(new { Message = "Admin not found" });
+                throw new CustomException("Admin not found", 404);
 
             var emailCheck = (await _adminService.GetByMultipleConditionsAsync(
                 new List<FilterDTO> { new FilterDTO { PropertyName = "Email", Value = updateAdminDto.Email } }
             )).FirstOrDefault();
 
             if (emailCheck != null && emailCheck.AdminId != id)
-                return BadRequest(new { Message = "Email is already in use by another admin" });
+                throw new CustomException("Email is already in use by another admin", 400);
 
             existingAdmin.FirstName = updateAdminDto.FirstName ?? existingAdmin.FirstName;
             existingAdmin.LastName = updateAdminDto.LastName ?? existingAdmin.LastName;
@@ -90,10 +85,8 @@ namespace EMS.Controllers
             existingAdmin.Phone = updateAdminDto.Phone ?? existingAdmin.Phone;
             existingAdmin.UpdatedAt = DateTime.UtcNow;
 
-            if (await _adminService.UpdateAsync(existingAdmin))
-                return Ok(new { Message = "Admin updated successfully" });
-            else
-                return StatusCode(500, new { Message = "Failed to update Admin due to an internal server error." });
+            await _adminService.UpdateAsync(existingAdmin);
+            return Ok("Admin updated successfully");
         }
 
         [HttpDelete("Delete/{id}")]
@@ -101,12 +94,10 @@ namespace EMS.Controllers
         {
             var admin = await _adminService.GetByIdAsync(id);
             if (admin == null)
-                return NotFound(new { Message = "Admin not found" });
+                throw new CustomException("Admin not found", 404);
 
-            if (await _adminService.DeleteAsync(admin.AdminId))
-                return Ok(new { Message = "Admin deleted successfully" });
-            else
-                return StatusCode(500, new { Message = "Failed to update Admin due to an internal server error. "});
+            await _adminService.DeleteAsync(admin.AdminId);
+            return Ok("Admin deleted successfully");
         }
     }
 }

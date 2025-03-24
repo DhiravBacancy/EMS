@@ -2,7 +2,11 @@
 using EMS.Helpers;
 using EMS.Models;
 using EMS.Service;
+using EMS.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace EMS.Controllers
 {
@@ -11,19 +15,28 @@ namespace EMS.Controllers
     public class TimeSheetController : ControllerBase
     {
         private readonly IGenericDBService<TimeSheet> _timeSheetService;
+        private readonly IExportTimesheetsToExcelService _exportToExcelService;
 
-        public TimeSheetController(IGenericDBService<TimeSheet> timeSheetService)
+        public TimeSheetController(IGenericDBService<TimeSheet> timeSheetService, IExportTimesheetsToExcelService exportToExcelService)
         {
             _timeSheetService = timeSheetService;
+            _exportToExcelService = exportToExcelService;
         }
 
         [HttpPost("add")]
         public async Task<IActionResult> AddTimeSheet([FromBody] AddTimeSheetDTO addTimeSheetDto)
         {
-
-            // Call the validation helper method to check for ModelState errors
             var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
             if (validationResult != null) return validationResult;
+
+            var existingTimeSheet = (await _timeSheetService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "EmployeeId", Value = addTimeSheetDto.EmployeeId },
+                new FilterDTO { PropertyName = "Date", Value = addTimeSheetDto.Date }
+            })).FirstOrDefault();
+
+            if (existingTimeSheet != null)
+                return BadRequest(new { Message = "Timesheet already exists for the given date." });
 
             var newTimeSheet = new TimeSheet
             {
@@ -33,14 +46,11 @@ namespace EMS.Controllers
                 EndTime = addTimeSheetDto.EndTime
             };
 
-            var result = await _timeSheetService.AddAsync(newTimeSheet);
-            return result
+            return await _timeSheetService.AddAsync(newTimeSheet)
                 ? Ok(new { Message = "Timesheet added successfully." })
                 : StatusCode(500, new { Message = "Internal Server Error: Failed to add timesheet." });
         }
 
-
-        // Get All TimeSheets of Employee
         [HttpGet("employee/{employeeId}")]
         public async Task<IActionResult> GetTimeSheetsOfEmployee(int employeeId)
         {
@@ -49,19 +59,14 @@ namespace EMS.Controllers
                 new FilterDTO { PropertyName = "EmployeeId", Value = employeeId }
             });
 
-            return timeSheets != null && timeSheets.Any()
+            return timeSheets.Any()
                 ? Ok(timeSheets)
                 : NotFound(new { Message = "No timesheets found for this employee." });
         }
 
-        // Update TimeSheet
         [HttpPut("update/{id}")]
         public async Task<IActionResult> UpdateTimeSheet(int id, [FromBody] UpdateTimeSheetDTO updateTimeSheetDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(new { Message = "Invalid input. Please provide valid timesheet data." });
-
-            // Call the validation helper method to check for ModelState errors
             var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
             if (validationResult != null) return validationResult;
 
@@ -69,17 +74,14 @@ namespace EMS.Controllers
             if (timeSheet == null)
                 return NotFound(new { Message = "Timesheet not found." });
 
-            timeSheet.StartTime = updateTimeSheetDto.StartTime;
-            timeSheet.EndTime = updateTimeSheetDto.EndTime;
+            timeSheet.StartTime = updateTimeSheetDto.StartTime ?? TimeSpan.Zero;
+            timeSheet.EndTime = updateTimeSheetDto.EndTime ?? TimeSpan.Zero;
 
-            var result = await _timeSheetService.UpdateAsync(timeSheet);
-            return result
+            return await _timeSheetService.UpdateAsync(timeSheet)
                 ? Ok(new { Message = "Timesheet updated successfully." })
                 : StatusCode(500, new { Message = "Internal Server Error: Failed to update timesheet." });
         }
 
-
-        // Delete TimeSheet
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteTimeSheet(int id)
         {
@@ -87,10 +89,47 @@ namespace EMS.Controllers
             if (timeSheet == null)
                 return NotFound(new { Message = "Timesheet not found." });
 
-            var result = await _timeSheetService.DeleteAsync(id);
-            return result
+            return await _timeSheetService.DeleteAsync(id)
                 ? Ok(new { Message = "Timesheet deleted successfully." })
                 : StatusCode(500, new { Message = "Internal Server Error: Failed to delete timesheet." });
         }
+
+        [HttpPost("export")]
+        public async Task<IActionResult> ExportTimeSheets([FromBody] ExportRequestDto request)
+        {
+            if (request == null || request.EmployeeId <= 0)
+            {
+                return BadRequest(new { Message = "Invalid employee ID." });
+            }
+
+            var timeSheets = await _timeSheetService.GetByMultipleConditionsAsync(new List<FilterDTO>
+    {
+        new FilterDTO { PropertyName = "EmployeeId", Value = request.EmployeeId }
+    });
+
+            if (timeSheets == null || !timeSheets.Any())
+                return BadRequest(new { Message = "No timesheets found for export." });
+
+            // Convert IEnumerable<TimeSheet> to List<TimeSheet>
+            var timeSheetList = timeSheets.ToList();
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine($"Exporting {timeSheetList.Count} timesheets to Excel.");
+            Console.WriteLine(); Console.WriteLine(); Console.WriteLine();
+            //foreach(TimeSheet t in timeSheetList)
+            //{
+
+            //    Console.WriteLine(t);
+            //}
+            // Get the file content from the service
+            var fileResult = await _exportToExcelService.ExportToExcel(timeSheetList);
+
+            
+            // Return the file directly (FileContentResult will handle it)
+            return fileResult;
+        }
+
+
+
     }
 }

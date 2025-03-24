@@ -3,7 +3,7 @@ using EMS.Helpers;
 
 namespace EMS.DTOs
 {
-    public class OTPVerificationDTO
+    public class VerifyOTPDTO
     {
         [Required]
         [ValidEmailHelper]

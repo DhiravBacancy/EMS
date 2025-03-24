@@ -17,7 +17,7 @@ namespace EMS.Service
         bool IsTokenRevoked(string token);
         Task<IActionResult> PasswordReset(ResetPasswordDTO resetPasswordDto);
         Task<IActionResult> ResetPasswordWhenNotLoggedIn(string email);
-        Task<IActionResult> VerifyOTP(string email, string enteredOtp);
+        Task<bool> VerifyOTP(string email, string enteredOtp);
     }
 
     public class AuthService : IAuthService
@@ -124,18 +124,18 @@ namespace EMS.Service
             return new OkObjectResult(new { message = "OTP sent to your email successfully." });
         }
 
-        public async Task<IActionResult> VerifyOTP(string email, string enteredOtp)
+        public async Task<bool> VerifyOTP(string email, string enteredOtp)
         {
             var storedOtp = _cacheService.Get(email) as string;
 
             if (storedOtp != null && storedOtp == enteredOtp)
             {
                 _cacheService.Remove(email);
-                return new OkObjectResult(new { message = "OTP verified successfully. You can reset your password now." });
+                return true;
             }
             else
             {
-                return new BadRequestObjectResult(new { message = "Invalid or expired OTP." });
+                return false;
             }
         }
 

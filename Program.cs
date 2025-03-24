@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using EMS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddScoped<IPDFService, PDFService>();
+builder.Services.AddScoped<IExportTimesheetsToExcelService, ExportTimesheetsToExcelService>();
+
+
+//builder.Services.AddScoped<IExportToPDFService, ExportToPDFService>();
 
 builder.Services.AddScoped(typeof(IGenericDBRepository<>), typeof(GenericDBRepository<>));
 builder.Services.AddScoped(typeof(IGenericDBService<>), typeof(GenericDBService<>));
@@ -87,16 +92,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>(); // Global error handling
+app.UseMiddleware<ResponseWrapperMiddleware>();
+
+
 app.UseHttpsRedirection();
 
-// ✅ Correct order of middleware
-app.UseRouting();       // ✅ Must be before UseAuthentication and UseAuthorization
+
+app.UseRouting();       
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseEndpoints(endpoints => // ✅ Ensure UseRouting is before this
-{
-    endpoints.MapControllers();
-});
+app.MapControllers();
+
 
 app.Run();

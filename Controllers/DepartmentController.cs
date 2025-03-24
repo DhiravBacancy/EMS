@@ -2,10 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using EMS.DTOs;
 using EMS.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using EMS.Helpers;
 
 namespace EMS.Controllers
@@ -25,29 +21,25 @@ namespace EMS.Controllers
         [HttpPost]
         public async Task<IActionResult> AddDepartment([FromBody] AddOrUpdateDepartmentDTO departmentDto)
         {
-            // Call the validation helper method to check for ModelState errors
+            if (departmentDto == null)
+                return BadRequest(new { message = "Invalid department data." });
+
             var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
             if (validationResult != null) return validationResult;
 
-            // Check if department already exists
             var existingDepartment = (await _departmentService.GetByMultipleConditionsAsync(new List<FilterDTO>
             {
                 new FilterDTO { PropertyName = "DepartmentName", Value = departmentDto.DepartmentName }
             })).FirstOrDefault();
 
             if (existingDepartment != null)
-                return BadRequest(new { message = "Department with this name already exists." });
+                return Conflict(new { message = "Department with this name already exists." });
 
-            // Add new department
-            var newDepartment = new Department
-            {
-                DepartmentName = departmentDto.DepartmentName
-            };
+            var newDepartment = new Department { DepartmentName = departmentDto.DepartmentName };
 
-            if (await _departmentService.AddAsync(newDepartment))
-                return Ok(new { message = "Department added successfully." });
-
-            return StatusCode(500, new { message = "Failed to add department due to an internal server error." });
+            return await _departmentService.AddAsync(newDepartment)
+                ? Ok(new { message = "Department added successfully." })
+                : StatusCode(500, new { message = "Failed to add department." });
         }
 
         // Get All Departments
@@ -55,76 +47,66 @@ namespace EMS.Controllers
         public async Task<IActionResult> GetAllDepartments()
         {
             var departments = await _departmentService.GetAllAsync();
-
-            if (departments == null || !departments.Any())
-                return NotFound(new { message = "No departments found." });
-
-            return Ok(departments);
+            return departments.Any() ? Ok(departments) : NotFound(new { message = "No departments found." });
         }
 
         // Get Department by ID
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetDepartmentById(int id)
         {
             var department = await _departmentService.GetByIdAsync(id);
-            if (department == null)
-                return NotFound(new { message = "Department not found." });
-
-            return Ok(department);
+            return department != null ? Ok(department) : NotFound(new { message = "Department not found." });
         }
 
         // Update Department
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateDepartment(int id, [FromBody] AddOrUpdateDepartmentDTO departmentDto)
         {
-            // Call the validation helper method to check for ModelState errors
+            if (departmentDto == null)
+                return BadRequest(new { message = "Invalid department data." });
+
             var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
             if (validationResult != null) return validationResult;
-
 
             var existingDepartment = await _departmentService.GetByIdAsync(id);
             if (existingDepartment == null)
                 return NotFound(new { message = "Department not found." });
 
-            // Check for name conflict when updating
-            var departmentCheck = (await _departmentService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            var duplicateDepartment = (await _departmentService.GetByMultipleConditionsAsync(new List<FilterDTO>
             {
                 new FilterDTO { PropertyName = "DepartmentName", Value = departmentDto.DepartmentName }
             })).FirstOrDefault();
 
-            if (departmentCheck != null && departmentCheck.DepartmentId != id)
-                return BadRequest(new { message = "Department name is already in use by another department." });
+            if (duplicateDepartment != null && duplicateDepartment.DepartmentId != id)
+                return Conflict(new { message = "Department name is already in use by another department." });
 
-            // Update department details
             existingDepartment.DepartmentName = departmentDto.DepartmentName;
 
-            if (await _departmentService.UpdateAsync(existingDepartment))
-                return Ok(new { message = "Department updated successfully." });
-
-            return StatusCode(500, new { message = "Failed to update department due to an internal server error." });
+            return await _departmentService.UpdateAsync(existingDepartment)
+                ? Ok(new { message = "Department updated successfully." })
+                : StatusCode(500, new { message = "Failed to update department." });
         }
 
         // Delete Department
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteDepartment(int id)
         {
             var department = await _departmentService.GetByIdAsync(id);
             if (department == null)
                 return NotFound(new { message = "Department not found." });
 
-            // Check if the department has employees before deleting
-            var employees = await _departmentService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            // Assuming `_employeeService` should be used to check for employees in a department
+            var hasEmployees = await _departmentService.GetByMultipleConditionsAsync(new List<FilterDTO>
             {
                 new FilterDTO { PropertyName = "DepartmentId", Value = id }
             });
 
-            if (employees.Any())
+            if (!hasEmployees.Any())
                 return BadRequest(new { message = "Department cannot be deleted because it contains employees." });
 
-            if (await _departmentService.DeleteAsync(id))
-                return Ok(new { message = "Department deleted successfully." });
-
-            return StatusCode(500, new { message = "Failed to delete department due to an internal server error." });
+            return await _departmentService.DeleteAsync(id)
+                ? Ok(new { message = "Department deleted successfully." })
+                : StatusCode(500, new { message = "Failed to delete department." });
         }
     }
 }
