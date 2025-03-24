@@ -14,8 +14,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IEmailService, EmailService>();
-builder.Services.AddScoped<IPDFService, PDFService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<IExportTimesheetsToExcelService, ExportTimesheetsToExcelService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 
 //builder.Services.AddScoped<IExportToPDFService, ExportToPDFService>();

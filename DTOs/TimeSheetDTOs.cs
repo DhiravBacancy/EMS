@@ -29,4 +29,11 @@ namespace EMS.DTOs
         [EndTimeAfterStartTimeHelper]
         public TimeSpan? EndTime { get; set; }
     }
+
+    public class TimeSheetDto
+    {
+        public DateTime Date { get; set; }
+        public double HoursWorked { get; set; }
+    }
+
 }

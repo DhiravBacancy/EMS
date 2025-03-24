@@ -12,10 +12,14 @@ namespace EMS.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly IGenericDBService<Employee> _employeeService;
+        private readonly IEmployeeService _employeeService1;
+        private readonly IPdfService _pdfService;
 
-        public EmployeeController(IGenericDBService<Employee> employeeService)
+        public EmployeeController(IGenericDBService<Employee> employeeService, IPdfService pdfService, IEmployeeService employeeService1)
         {
             _employeeService = employeeService;
+            _pdfService = pdfService;
+            _employeeService1 = employeeService1;
         }
 
         // Create Employee
@@ -135,5 +139,27 @@ namespace EMS.Controllers
             else
                 return StatusCode(500, new { message = "Failed to update Employee due to an internal server error." });
         }
+
+        [HttpGet("workhours")]
+        // Ensure the method is async
+        public async Task<IActionResult> GenerateEmployeeReport(int employeeId, string reportType)
+        {
+            try
+            {
+                // Await the async call to get employee details
+                var employeeDetails = await _employeeService1.GetEmployeeDetailsAsync(employeeId, reportType);
+
+                // Generate PDF using the resolved employee details
+                var pdfBytes = _pdfService.GenerateEmployeeWorkHoursReport(employeeDetails, reportType);
+
+                // Return the PDF as a file (or any other response depending on your requirement)
+                return File(pdfBytes, "application/pdf", "EmployeeWorkHoursReport.pdf");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
     }
 }
