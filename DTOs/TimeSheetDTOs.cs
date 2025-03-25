@@ -19,6 +19,7 @@ namespace EMS.DTOs
 
         [EndTimeAfterStartTimeHelper]
         public TimeSpan EndTime { get; set; }
+        public String Description { get; set; }
     }
 
     // DTO for updating an existing timesheet

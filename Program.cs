@@ -2,9 +2,6 @@
 using EMS.Repositories;
 using EMS.Service;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using EMS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<IExportTimesheetsToExcelService, ExportTimesheetsToExcelService>();
-builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+//builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 
 //builder.Services.AddScoped<IExportToPDFService, ExportToPDFService>();
@@ -61,8 +58,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<ExceptionHandlingMiddleware>(); // Global error handling
-app.UseMiddleware<ResponseWrapperMiddleware>();
+//app.UseMiddleware<ExceptionHandlingMiddleware>(); // Global error handling
+//app.UseMiddleware<ResponseWrapperMiddleware>();
 
 
 app.UseHttpsRedirection();
@@ -70,6 +67,7 @@ app.UseHttpsRedirection();
 
 //app.UseMiddleware<JwtAuthenticationMiddleware>();
 
+app.UseStaticFiles(); // Enables serving files from wwwroot
 
 app.UseRouting();       
 app.UseAuthentication();

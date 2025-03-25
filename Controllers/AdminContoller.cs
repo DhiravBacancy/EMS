@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using EMS.DTOs;
 using EMS.Models;
 using EMS.Helpers;
+using EMS.Services;
+using EMS.Enums;
 
 
 namespace EMS.Controllers
@@ -12,10 +14,18 @@ namespace EMS.Controllers
     public class AdminController : Controller
     {
         private readonly IGenericDBService<Admin> _adminService;
+        private readonly IGenericDBService<TimeSheet> _timeSheetService;
+        private readonly IGenericDBService<Employee> _employeeService;
+        private readonly IGenericDBService<Leave> _leaveService;
+        private readonly IExportTimesheetsToExcelService _exportToExcelService;
 
-        public AdminController(IGenericDBService<Admin> adminService)
+        public AdminController(IGenericDBService<Admin> adminService, IGenericDBService<TimeSheet> timeSheetService, IExportTimesheetsToExcelService exportTimesheetsToExcelService, IGenericDBService<Employee> employeeService, IGenericDBService<Leave> leaveService)
         {
             _adminService = adminService;
+            _timeSheetService = timeSheetService;
+            _exportToExcelService = exportTimesheetsToExcelService;
+            _employeeService = employeeService;
+            _leaveService = leaveService;
         }
 
         [HttpPost("Add")]
@@ -99,5 +109,99 @@ namespace EMS.Controllers
             await _adminService.DeleteAsync(admin.AdminId);
             return Ok("Admin deleted successfully");
         }
+
+        [HttpGet("getEmployeeDetail/{employeeEmail}")]
+        public async Task<IActionResult> GetEmployeeDetail(string employeeEmail)
+        {
+            var employee = await _employeeService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "Email", Value = employeeEmail}
+            });
+            if (employee == null || !employee.Any())
+                return BadRequest(new { Message = "No timesheets found for export." });
+            return Ok(employee);
+        }
+
+        [HttpGet("getEmployeePendingLeaveRequest/{employeeEmail}")]
+        public async Task<IActionResult> getEmployeesPendingLeaveRequest(string employeeEmail)
+        {
+            var employee = await _employeeService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "Email", Value = employeeEmail }
+            });
+
+            if (employee == null || !employee.Any())
+            {
+                return BadRequest(new { Message = "No Employee found for export." });
+            }
+            // Assuming your Employee object has an Id property (adjust if needed)
+            var employeeId = employee.First().EmployeeId;
+
+            var pendingLeaves = await _leaveService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "EmployeeId", Value = employeeId },
+                new FilterDTO { PropertyName = "Status", Value = StatusEnum.Pending }
+            });
+
+            if (pendingLeaves == null || !pendingLeaves.Any())
+            {
+                return BadRequest(new { Message = "No timesheets found for export." });
+            }
+
+            var leaveDTOs = pendingLeaves.Select(leave => new LeaveTransferDTO
+            {
+                LeaveId = leave.LeaveId,
+                StartDate = leave.StartDate,
+                EndDate = leave.EndDate,
+                TotalDays = leave.TotalDays,
+                LeaveType = leave.LeaveType,
+                Reason = leave.Reason,
+                Status = leave.Status,
+                AppliedAt = leave.AppliedAt
+            }).ToList();
+
+            return Ok(leaveDTOs);
+
+        }
+
+        [HttpGet("exportEmployeeTimeSheet/{employeeEmail}")]
+        public async Task<IActionResult> ExportTimeSheets(string employeeEmail)
+        {
+            var employee = await _employeeService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "Email", Value = employeeEmail }
+            });
+
+            if (employee == null || !employee.Any())
+            {
+                return BadRequest(new { Message = "No Employee found for export." });
+            }
+
+            // Assuming your Employee object has an Id property (adjust if needed)
+            var employeeId = employee.First().EmployeeId;
+
+            var timeSheets = await _timeSheetService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "EmployeeId", Value = employeeId } // Use EmployeeId here
+            });
+
+            if (timeSheets == null || !timeSheets.Any())
+            {
+                return BadRequest(new { Message = "No timesheets found for export." });
+            }
+
+            // Convert IEnumerable<TimeSheet> to List<TimeSheet>
+            var timeSheetList = timeSheets.ToList();
+
+            Console.WriteLine($"Exporting {timeSheetList.Count} timesheets to Excel.");
+
+            // Get the file content from the service
+            var fileResult = await _exportToExcelService.ExportToExcel(timeSheetList);
+
+            // Return the file directly (FileContentResult will handle it)
+            return fileResult;
+        }
+
+
     }
 }

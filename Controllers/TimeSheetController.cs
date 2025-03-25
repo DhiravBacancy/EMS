@@ -15,12 +15,10 @@ namespace EMS.Controllers
     public class TimeSheetController : ControllerBase
     {
         private readonly IGenericDBService<TimeSheet> _timeSheetService;
-        private readonly IExportTimesheetsToExcelService _exportToExcelService;
 
         public TimeSheetController(IGenericDBService<TimeSheet> timeSheetService, IExportTimesheetsToExcelService exportToExcelService)
         {
             _timeSheetService = timeSheetService;
-            _exportToExcelService = exportToExcelService;
         }
 
         [HttpPost("add")]
@@ -43,7 +41,8 @@ namespace EMS.Controllers
                 EmployeeId = addTimeSheetDto.EmployeeId,
                 Date = addTimeSheetDto.Date,
                 StartTime = addTimeSheetDto.StartTime,
-                EndTime = addTimeSheetDto.EndTime
+                EndTime = addTimeSheetDto.EndTime,
+                Description = addTimeSheetDto.Description
             };
 
             return await _timeSheetService.AddAsync(newTimeSheet)
@@ -93,43 +92,5 @@ namespace EMS.Controllers
                 ? Ok(new { Message = "Timesheet deleted successfully." })
                 : StatusCode(500, new { Message = "Internal Server Error: Failed to delete timesheet." });
         }
-
-        [HttpPost("export")]
-        public async Task<IActionResult> ExportTimeSheets([FromBody] ExportRequestDto request)
-        {
-            if (request == null || request.EmployeeId <= 0)
-            {
-                return BadRequest(new { Message = "Invalid employee ID." });
-            }
-
-            var timeSheets = await _timeSheetService.GetByMultipleConditionsAsync(new List<FilterDTO>
-    {
-        new FilterDTO { PropertyName = "EmployeeId", Value = request.EmployeeId }
-    });
-
-            if (timeSheets == null || !timeSheets.Any())
-                return BadRequest(new { Message = "No timesheets found for export." });
-
-            // Convert IEnumerable<TimeSheet> to List<TimeSheet>
-            var timeSheetList = timeSheets.ToList();
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine($"Exporting {timeSheetList.Count} timesheets to Excel.");
-            Console.WriteLine(); Console.WriteLine(); Console.WriteLine();
-            //foreach(TimeSheet t in timeSheetList)
-            //{
-
-            //    Console.WriteLine(t);
-            //}
-            // Get the file content from the service
-            var fileResult = await _exportToExcelService.ExportToExcel(timeSheetList);
-
-            
-            // Return the file directly (FileContentResult will handle it)
-            return fileResult;
-        }
-
-
-
     }
 }
