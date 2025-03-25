@@ -51,4 +51,14 @@ namespace EMS.DTOs
         [Required]
         public StatusEnum Status { get; set; }
     }
+
+    public class LeaveRequestDTO
+    {
+        public string EmployeeName { get; set; }
+        public string StartDate { get; set; }
+        public string EndDate { get; set; }
+        public string Reason { get; set; }
+        public string Status { get; set; } // If Status is required
+    }
+
 }

@@ -46,4 +46,29 @@ namespace EMS.DTOs
         public string? Address { get; set; }
         public string? TechStack { get; set; }
     }
+    public class EmployeeDashboardDTO
+    {
+        public int TotalLoggedHours { get; set; }
+        public int LeaveBalance { get; set; }
+        public List<TimesheetDTO> LatestTimesheets { get; set; }
+
+    }
+
+    public class AdminDashboardDTO
+    {
+        public int TotalEmployees { get; set; }
+        public int TotalLoggedHours { get; set; }
+        public List<EmployeeActivityDTO> TopEmployees { get; set; }
+        public List<LeaveRequestDTO> PendingLeaveRequests { get; set; }
+        public string EmployeeEmail { get; set; } // Add the email here if necessary
+    }
+
+    public class EmployeeActivityDTO
+    {
+        public string EmployeeName { get; set; }
+        public int TotalHoursWorked { get; set; }
+        public string EmployeeEmail { get; set; } // Include email in case you need it
+    }
+
+
 }

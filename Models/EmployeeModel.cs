@@ -18,6 +18,7 @@ namespace EMS.Models
         public ICollection<Leave>? Leaves { get; set; }
         public ICollection<TimeSheet>? TimeSheets { get; set; }
         public string? TechStack { get; set; }
+        public int PaidLeavesRemaining { get; set; } = 18;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public RolesEnum Role { get; set; } = RolesEnum.Employee;

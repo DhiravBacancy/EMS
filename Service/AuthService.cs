@@ -165,7 +165,7 @@ namespace EMS.Service
             var secretKey = _configuration["JwtSettings:SecretKey"];
             var issuer = _configuration["JwtSettings:Issuer"];
             var audience = _configuration["JwtSettings:Audience"];
-            var expirationTime = DateTime.UtcNow.AddMinutes(30);
+            var expirationTime = DateTime.UtcNow.AddMinutes(120);
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -195,7 +195,7 @@ namespace EMS.Service
 
         public void Logout(string token)
         {
-            _cacheService.Set(token, "invalid", TimeSpan.FromMinutes(30));
+            _cacheService.Set(token, "invalid", TimeSpan.FromMinutes(120));
         }
 
         public bool IsTokenRevoked(string token)

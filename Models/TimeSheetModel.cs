@@ -11,9 +11,8 @@ namespace EMS.Models
         public TimeSpan StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
 
-        [NotMapped] // Ensures this is NOT stored in the database
-        public decimal? TotalHours => EndTime.HasValue ? (decimal)(EndTime.Value - StartTime).TotalHours : null;
-
+        [NotMapped]
+        public decimal? TotalHours => EndTime != null ? Math.Floor((decimal)(EndTime.Value.TotalHours - StartTime.TotalHours) * 100) / 100 : null;
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

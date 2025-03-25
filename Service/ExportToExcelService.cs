@@ -39,7 +39,7 @@ namespace EMS.Services
                         var t = timesheets[i];
                         worksheet.Cells[i + 2, 1].Value = t.Date.ToString("yyyy-MM-dd");
                         worksheet.Cells[i + 2, 2].Value = t.StartTime.ToString();
-                        worksheet.Cells[i + 2, 3].Value = t.EndTime?.ToString();
+                        worksheet.Cells[i + 2, 3].Value = t.EndTime.ToString();
                         worksheet.Cells[i + 2, 4].Value = t.TotalHours.HasValue ? t.TotalHours.Value.ToString("F2") : "N/A";
                         worksheet.Cells[i + 2, 5].Value = t.Description;
                     }

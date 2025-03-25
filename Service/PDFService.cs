@@ -59,7 +59,7 @@ namespace EMS.Service
                         foreach (var entry in employee.TimeSheets)
                         {
                             table.Cell().Text(index++.ToString());
-                            table.Cell().Text(entry.Date.ToString("yyyy-MM-dd"));
+                            //table.Cell().Text(entry.Date.ToString("yyyy-MM-dd"));
                             table.Cell().Text(entry.HoursWorked.ToString());
                         }
                     });

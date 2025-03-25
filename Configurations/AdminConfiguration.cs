@@ -8,29 +8,32 @@ namespace EMS.Configurations
     {
         public void Configure(EntityTypeBuilder<Admin> builder)
         {
-            builder.HasKey(e => e.AdminId);
+            builder.HasKey(a => a.AdminId);
 
-            builder.Property(e => e.AdminId)
+            builder.Property(a => a.AdminId)
                 .ValueGeneratedOnAdd()
                 .IsRequired();
 
-            builder.Property(e => e.FirstName)
-                .HasMaxLength(100)
+            builder.Property(a => a.FirstName)
+                .HasColumnType("VARCHAR(100)")
                 .IsRequired(true);
 
-            builder.Property(e => e.LastName)
-                .HasMaxLength(100)
+            builder.Property(a => a.LastName)
+                .HasColumnType("VARCHAR(100)")
                 .IsRequired(true);
 
-            builder.Property(e => e.Email)
-                .HasMaxLength(255)
+            builder.Property(a => a.Email)
+                .HasColumnType("VARCHAR(255)")
                 .IsRequired(true);
 
-            builder.Property(e => e.Phone)
-                .HasMaxLength(15)
+            builder.HasIndex(a => a.Email)
+                .IsUnique(true);
+
+            builder.Property(a => a.Phone)
+                .HasColumnType("VARCHAR(15)")
                 .IsRequired(true);
 
-            builder.Property(e => e.Role)
+            builder.Property(a => a.Role)
                 .HasConversion<string>() // Store as string (VARCHAR)
                 .HasMaxLength(20)        // Limit length to 20 (matching enum length)
                 .IsRequired(true);

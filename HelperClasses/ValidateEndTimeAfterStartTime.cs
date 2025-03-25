@@ -13,11 +13,11 @@ namespace EMS.Helpers
             var timeSheet = (AddTimeSheetDTO)validationContext.ObjectInstance;
 
             // Check if EndTime is greater than StartTime
-            if (timeSheet.EndTime.HasValue && timeSheet.EndTime <= timeSheet.StartTime)
+            if (timeSheet.EndTime != null && timeSheet.EndTime <= timeSheet.StartTime)
             {
-                // Return a validation result if the condition is not met
                 return new ValidationResult("EndTime must be greater than StartTime.");
             }
+
 
             return ValidationResult.Success; // Validation passes
         }

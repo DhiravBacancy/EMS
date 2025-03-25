@@ -17,7 +17,7 @@ namespace EMS.Models
 
         public LeaveTypeEnum LeaveType { get; set; }
 
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
 
         public StatusEnum Status { get; set; } = StatusEnum.Pending;
 

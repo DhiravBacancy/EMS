@@ -15,13 +15,14 @@ namespace EMS.Configurations
                 .IsRequired(true);
 
             builder.Property(d => d.DepartmentName)
-                .HasMaxLength(100)
+                .HasColumnType("VARCHAR(100)")
                 .IsRequired(true);
 
+            // Department - Employee relationship (One-to-Many)
             builder.HasMany(d => d.Employees)
-                .WithOne(e => e.Department)
+                .WithOne(e => e.Department) // Assuming the Employee model has a navigation property 'Department'
                 .HasForeignKey(e => e.DepartmentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull); // Set to NULL if the department is deleted
         }
     }
 }

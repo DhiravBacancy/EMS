@@ -15,51 +15,62 @@ namespace EMS.Configurations
             builder.HasKey(e => e.EmployeeId);
 
             builder.Property(e => e.EmployeeId)
-                .ValueGeneratedOnAdd();
+                .ValueGeneratedOnAdd()
+                .IsRequired(true);
 
             builder.Property(e => e.FirstName)
-                .HasMaxLength(100)
+                .HasColumnType("VARCHAR(100)")
                 .IsRequired(true);
 
             builder.Property(e => e.LastName)
-                .HasMaxLength(100)
+                .HasColumnType("VARCHAR(100)")
                 .IsRequired(true);
 
             builder.Property(e => e.Email)
-                .IsRequired(true)
-                .HasMaxLength(255);
+                .HasColumnType("VARCHAR(255)")
+                .IsRequired(true);
 
             builder.HasIndex(e => e.Email)
                 .IsUnique(true);
 
+            builder.Property(e => e.Password)
+                .IsRequired(true);
+
             builder.Property(e => e.Phone)
-                .HasMaxLength(15)
+                .HasColumnType("VARCHAR(15)")
                 .IsRequired(true);
 
             builder.Property(e => e.DateOfBirth)
                  .IsRequired(false);
 
             builder.Property(e => e.Address)
-                .IsRequired(false)
-                .HasMaxLength(500);  // Adding a max length if necessary
+                .HasColumnType("TEXT")
+                .IsRequired(false);
 
 
+            // Employee - Department relationship (Many-to-One)
             builder.HasOne(e => e.Department)
-                .WithMany(d => d.Employees)
+                .WithMany(d => d.Employees) // Assuming the Department model has a navigation property 'Employees'
                 .HasForeignKey(e => e.DepartmentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull); // Set to NULL if the department is deleted
 
+            // Employee - Leave relationship (One-to-Many)
             builder.HasMany(e => e.Leaves)
-                .WithOne(l => l.Employee)
+                .WithOne(l => l.Employee) // Assuming the Leave model has a navigation property 'Employee'
                 .HasForeignKey(l => l.EmployeeId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade); // Delete related leaves if the employee is deleted
+
+            // Employee - TimeSheet relationship (One-to-Many)
+            builder.HasMany(e => e.TimeSheets)
+                .WithOne(ts => ts.Employee) // Assuming the TimeSheet model has a navigation property 'Employee'
+                .HasForeignKey(ts => ts.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade); // Delete related timesheets if the employee is deleted
 
 
             builder.Property(e => e.TechStack)
-                .IsRequired(false)
-                .HasMaxLength(200);  // Adding a max length if necessary
-
-            // Store the RoleEnum as String in the database
+                .HasColumnType("TEXT")
+                .IsRequired(false);
+               
             builder.Property(e => e.Role)
                 .HasConversion<string>() // Store as string (VARCHAR)
                 .HasMaxLength(20)        // Limit length to 20 (matching enum length)

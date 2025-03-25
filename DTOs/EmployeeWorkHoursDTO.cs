@@ -14,7 +14,7 @@
         public string Address { get; set; }
         public string Department { get; set; }
         public string TechStack { get; set; }
-        public List<TimeSheetDto> TimeSheets { get; set; }
+        public List<TimesheetDTO> TimeSheets { get; set; }
     }
 
 }

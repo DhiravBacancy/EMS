@@ -12,6 +12,7 @@ namespace EMS.Controllers
     public class LeaveController : ControllerBase
     {
         private readonly IGenericDBService<Leave> _leaveService;
+        private readonly IGenericDBService<Employee> _employeeService;
 
         public LeaveController(IGenericDBService<Leave> leaveService)
         {
@@ -75,6 +76,12 @@ namespace EMS.Controllers
             if (leaveRequest == null)
                 return NotFound(new { message = "Leave request not found." });
 
+            if(leaveRequest.LeaveType != LeaveTypeEnum.UnpaidLeave && leaveApprovalDto.Status == StatusEnum.Approved)
+            {
+                var employee = await _employeeService.GetByIdAsync(leaveRequest.EmployeeId);
+                employee.PaidLeavesRemaining -= leaveRequest.TotalDays;
+                await _employeeService.UpdateAsync(employee);
+            }
             leaveRequest.Status = leaveApprovalDto.Status;
 
             return await _leaveService.UpdateAsync(leaveRequest)

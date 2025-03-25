@@ -18,7 +18,7 @@ namespace EMS.DTOs
         public TimeSpan StartTime { get; set; }
 
         [EndTimeAfterStartTimeHelper]
-        public TimeSpan? EndTime { get; set; }
+        public TimeSpan EndTime { get; set; }
     }
 
     // DTO for updating an existing timesheet
@@ -30,10 +30,11 @@ namespace EMS.DTOs
         public TimeSpan? EndTime { get; set; }
     }
 
-    public class TimeSheetDto
+    public class TimesheetDTO
     {
-        public DateTime Date { get; set; }
+        public string Date { get; set; }
         public double HoursWorked { get; set; }
     }
+
 
 }
