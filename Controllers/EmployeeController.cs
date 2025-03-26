@@ -112,7 +112,6 @@ namespace EMS.Controllers
             }
 
             // Update fields
-            existingEmployee.Password = BCrypt.Net.BCrypt.HashPassword(updateEmployeeDto.Password);
             existingEmployee.FirstName = updateEmployeeDto.FirstName ?? existingEmployee.FirstName;
             existingEmployee.LastName = updateEmployeeDto.LastName ?? existingEmployee.LastName;
             existingEmployee.Email = updateEmployeeDto.Email ?? existingEmployee.Email;

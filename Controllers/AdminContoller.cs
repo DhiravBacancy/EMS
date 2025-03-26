@@ -17,15 +17,25 @@ namespace EMS.Controllers
         private readonly IGenericDBService<TimeSheet> _timeSheetService;
         private readonly IGenericDBService<Employee> _employeeService;
         private readonly IGenericDBService<Leave> _leaveService;
+        private readonly IGenericDBService<Department> _departmentService;
         private readonly IExportTimesheetsToExcelService _exportToExcelService;
+        private readonly IPdfService _pdfService;
 
-        public AdminController(IGenericDBService<Admin> adminService, IGenericDBService<TimeSheet> timeSheetService, IExportTimesheetsToExcelService exportTimesheetsToExcelService, IGenericDBService<Employee> employeeService, IGenericDBService<Leave> leaveService)
+
+        public AdminController(IGenericDBService<Admin> adminService, 
+                                IGenericDBService<TimeSheet> timeSheetService, 
+                                IExportTimesheetsToExcelService exportTimesheetsToExcelService, 
+                                IGenericDBService<Employee> employeeService, IGenericDBService<Leave> leaveService, 
+                                IPdfService pdfService,
+                                IGenericDBService<Department> departmentService)
         {
             _adminService = adminService;
             _timeSheetService = timeSheetService;
             _exportToExcelService = exportTimesheetsToExcelService;
             _employeeService = employeeService;
+            _departmentService = departmentService;
             _leaveService = leaveService;
+            _pdfService = pdfService;
         }
 
         [HttpPost("Add")]
@@ -110,6 +120,7 @@ namespace EMS.Controllers
             return Ok("Admin deleted successfully");
         }
 
+
         [HttpGet("getEmployeeDetail/{employeeEmail}")]
         public async Task<IActionResult> GetEmployeeDetail(string employeeEmail)
         {
@@ -121,6 +132,7 @@ namespace EMS.Controllers
                 return BadRequest(new { Message = "No timesheets found for export." });
             return Ok(employee);
         }
+
 
         [HttpGet("getEmployeePendingLeaveRequest/{employeeEmail}")]
         public async Task<IActionResult> getEmployeesPendingLeaveRequest(string employeeEmail)
@@ -164,6 +176,7 @@ namespace EMS.Controllers
 
         }
 
+
         [HttpGet("exportEmployeeTimeSheet/{employeeEmail}")]
         public async Task<IActionResult> ExportTimeSheets(string employeeEmail)
         {
@@ -200,6 +213,75 @@ namespace EMS.Controllers
 
             // Return the file directly (FileContentResult will handle it)
             return fileResult;
+        }
+
+
+        [HttpPost("generateEmployeeWorkReport")]
+        public async Task<IActionResult> GenerateEmployeeWorkReport([FromBody] EmployeeWorkReportRequestDTO request)
+        {
+            DTOValidationHelper.ValidateModelState(ModelState);
+
+            // Retrieve employee by email
+            var employee = (await _employeeService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "Email", Value = request.Email }
+            })).FirstOrDefault();
+
+            if (employee == null)
+                return NotFound(new { Message = "Employee not found." });
+
+            // Get start and end dates based on period
+            DateTime startDate = request.Period == "weekly" ? DateTime.UtcNow.AddDays(-7) : DateTime.UtcNow.AddMonths(-1);
+            DateTime endDate = DateTime.UtcNow;
+
+            // Adjust filter to use the Date property for filtering TimeSheets
+            var timeSheets = await _timeSheetService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "EmployeeId", Value = employee.EmployeeId },
+                new FilterDTO { PropertyName = "Date", Value = startDate, Operator = ">=" },  // Use Date for filtering
+                new FilterDTO { PropertyName = "Date", Value = endDate, Operator = "<=" }       // Use Date for filtering
+            });
+
+            // Get the number of leaves taken within the date range
+            var leavesTaken = (await _leaveService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "EmployeeId", Value = employee.EmployeeId },
+                new FilterDTO { PropertyName = "StartDate", Value = startDate, Operator = ">=" },
+                new FilterDTO { PropertyName = "EndDate", Value = endDate, Operator = "<=" }
+            })).Count();
+
+            var department = await _departmentService.GetByMultipleConditionsAsync(new List<FilterDTO>
+            {
+                new FilterDTO { PropertyName = "DepartmentId", Value = employee.DepartmentId }
+            });
+
+            // Handle the case where department is not found
+            var departmentName = department.FirstOrDefault()?.DepartmentName ?? "No Department";
+
+            // Create the report DTO
+            var report = new EmployeeWorkReportDTO
+            {
+                EmployeeName = $"{employee.FirstName} {employee.LastName}",
+                Email = employee.Email,
+                Department = departmentName,
+                TotalHoursWorked = (int)timeSheets.Sum(ts => ts.TotalHours ?? 0),
+                LeavesTaken = leavesTaken,
+                PaidLeavesRemaining = employee.PaidLeavesRemaining,
+                TimeSheets = timeSheets.Select(ts => new TimeSheetDTOForReport
+                {
+                    Date = ts.Date,
+                    StartTime = ts.StartTime,
+                    EndTime = ts.EndTime,
+                    TotalHours = ts.TotalHours,
+                    Description = ts.Description
+                }).ToList()
+            };
+
+            // Generate PDF using PdfService
+            byte[] pdfBytes = _pdfService.GenerateEmployeeWorkHoursReport(report, request.Period);
+
+            // Return the PDF as a file
+            return File(pdfBytes, "application/pdf", $"Employee_Work_Report_{employee.EmployeeId}.pdf");
         }
 
 

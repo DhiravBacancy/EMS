@@ -51,15 +51,18 @@ namespace EMS.Repositories
                     throw new ArgumentException($"Property '{filter.PropertyName}' does not exist on '{entityType.Name}'");
 
                 var propertyAccess = Expression.Property(parameter, property);
-
-                // Check if the property type matches the type of the value being passed
                 var propertyType = property.PropertyType;
                 var constantValue = Expression.Constant(Convert.ChangeType(filter.Value, propertyType));
 
-                // Handle different comparison types (Equality for now)
-                Expression filterExpression = Expression.Equal(propertyAccess, constantValue);
+                Expression filterExpression = filter.Operator switch
+                {
+                    ">" => Expression.GreaterThan(propertyAccess, constantValue),
+                    ">=" => Expression.GreaterThanOrEqual(propertyAccess, constantValue),
+                    "<" => Expression.LessThan(propertyAccess, constantValue),
+                    "<=" => Expression.LessThanOrEqual(propertyAccess, constantValue),
+                    _ => Expression.Equal(propertyAccess, constantValue) // Default to "="
+                };
 
-                // Combine expressions using 'AND' logic
                 combinedExpression = combinedExpression == null
                     ? filterExpression
                     : Expression.AndAlso(combinedExpression, filterExpression);

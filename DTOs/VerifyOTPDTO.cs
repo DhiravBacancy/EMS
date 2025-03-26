@@ -9,5 +9,7 @@ namespace EMS.DTOs
         [ValidEmailHelper]
         public string Email { get; set; }
         public string EnteredOTP { get; set; }
+
+        public string NewPassword { get; set; }
     }
 }

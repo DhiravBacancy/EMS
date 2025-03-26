@@ -70,9 +70,21 @@ public class AuthController : ControllerBase
         if (string.IsNullOrEmpty(verifyOtpDto.Email) || string.IsNullOrEmpty(verifyOtpDto.EnteredOTP))
             throw new CustomException("Email and OTP are required", 400);
 
-        var response = await _authService.VerifyOTP(verifyOtpDto.Email, verifyOtpDto.EnteredOTP);
-        if (!response) throw new CustomException("Invalid OTP", 400);
+        var isOtpValid = await _authService.VerifyOTP(verifyOtpDto.Email, verifyOtpDto.EnteredOTP);
+        if (!isOtpValid) throw new CustomException("Invalid OTP", 400);
 
-        return Ok(new { message = "OTP verified successfully" });
+        // Proceed to reset password after OTP verification
+        var resetPasswordDto = new ResetPasswordDTO
+        {
+            Email = verifyOtpDto.Email,
+            NewPassword = verifyOtpDto.NewPassword, // Ensure this field exists in VerifyOTPDTO or retrieve it from the reques
+        };
+
+
+        var result = await _authService.PasswordReset(resetPasswordDto);
+        if (result == null) throw new CustomException("Password reset failed", 500);
+
+        return Ok(new { message = "Password reset successful" });
     }
+
 }

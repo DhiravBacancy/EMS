@@ -9,5 +9,7 @@ namespace EMS.DTOs
         public string PropertyName { get; set; }
         [Required]
         public object Value { get; set; }  // Object type to handle any data type
+
+        public string Operator { get; set; } = "="; // Default to equality
     }
 }

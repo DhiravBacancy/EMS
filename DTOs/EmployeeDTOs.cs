@@ -37,7 +37,6 @@ namespace EMS.DTOs
 
         [ValidEmailHelper("@gmail.com")]
         public string? Email { get; set; }
-        public string? Password { get; set; }
         [ValidPhoneNumberHelper]
         public string? Phone { get; set; }
 
