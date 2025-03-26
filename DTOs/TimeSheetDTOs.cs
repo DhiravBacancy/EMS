@@ -29,6 +29,8 @@ namespace EMS.DTOs
 
         [EndTimeAfterStartTimeHelper]
         public TimeSpan? EndTime { get; set; }
+
+        public string Description { get; set; }
     }
 
     public class TimesheetDTO

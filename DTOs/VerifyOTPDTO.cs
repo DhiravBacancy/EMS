@@ -8,8 +8,11 @@ namespace EMS.DTOs
         [Required]
         [ValidEmailHelper]
         public string Email { get; set; }
+
+        [Required]
         public string EnteredOTP { get; set; }
 
+        [Required]
         public string NewPassword { get; set; }
     }
 }

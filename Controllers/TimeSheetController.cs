@@ -1,96 +1,64 @@
 ﻿using EMS.DTOs;
 using EMS.Helpers;
-using EMS.Models;
-using EMS.Service;
 using EMS.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EMS.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class TimeSheetController : ControllerBase
     {
-        private readonly IGenericDBService<TimeSheet> _timeSheetService;
+        private readonly ITimeSheetService _timeSheetService;
 
-        public TimeSheetController(IGenericDBService<TimeSheet> timeSheetService, IExportTimesheetsToExcelService exportToExcelService)
+        public TimeSheetController(ITimeSheetService timeSheetService)
         {
             _timeSheetService = timeSheetService;
         }
 
-        [HttpPost("add")]
+        [HttpPost]
         public async Task<IActionResult> AddTimeSheet([FromBody] AddTimeSheetDTO addTimeSheetDto)
         {
-            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
-            if (validationResult != null) return validationResult;
+            var response = await _timeSheetService.AddTimeSheetAsync(addTimeSheetDto);
+            if (!response.Success)
+                return BadRequest(new { message = response.Message });
 
-            var existingTimeSheet = (await _timeSheetService.GetByMultipleConditionsAsync(new List<FilterDTO>
-            {
-                new FilterDTO { PropertyName = "EmployeeId", Value = addTimeSheetDto.EmployeeId },
-                new FilterDTO { PropertyName = "Date", Value = addTimeSheetDto.Date }
-            })).FirstOrDefault();
-
-            if (existingTimeSheet != null)
-                return BadRequest(new { Message = "Timesheet already exists for the given date." });
-
-            var newTimeSheet = new TimeSheet
-            {
-                EmployeeId = addTimeSheetDto.EmployeeId,
-                Date = addTimeSheetDto.Date,
-                StartTime = addTimeSheetDto.StartTime,
-                EndTime = addTimeSheetDto.EndTime,
-                Description = addTimeSheetDto.Description
-            };
-
-            return await _timeSheetService.AddAsync(newTimeSheet)
-                ? Ok(new { Message = "Timesheet added successfully." })
-                : StatusCode(500, new { Message = "Internal Server Error: Failed to add timesheet." });
+            return Ok(new { message = response.Message });
         }
 
-        [HttpGet("employee/{employeeId}")]
-        public async Task<IActionResult> GetTimeSheetsOfEmployee(int employeeId)
+        [HttpGet("{employeeId}")]
+        public async Task<IActionResult> GetAllTimeSheetsOfEmployee(int employeeId)
         {
-            var timeSheets = await _timeSheetService.GetByMultipleConditionsAsync(new List<FilterDTO>
-            {
-                new FilterDTO { PropertyName = "EmployeeId", Value = employeeId }
-            });
+            var response = await _timeSheetService.GetAllTimeSheetsOfEmployeeAsync(employeeId);
+            if (!response.Success)
+                return NotFound(new { message = response.Message });
 
-            return timeSheets.Any()
-                ? Ok(timeSheets)
-                : NotFound(new { Message = "No timesheets found for this employee." });
+            return Ok(response.Data);
         }
 
-        [HttpPut("update/{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTimeSheet(int id, [FromBody] UpdateTimeSheetDTO updateTimeSheetDto)
         {
             var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
             if (validationResult != null) return validationResult;
 
-            var timeSheet = await _timeSheetService.GetByIdAsync(id);
-            if (timeSheet == null)
-                return NotFound(new { Message = "Timesheet not found." });
+            var response = await _timeSheetService.UpdateTimeSheetAsync(id, updateTimeSheetDto);
+            if (!response.Success)
+                return BadRequest(new { message = response.Message });
 
-            timeSheet.StartTime = updateTimeSheetDto.StartTime ?? TimeSpan.Zero;
-            timeSheet.EndTime = updateTimeSheetDto.EndTime ?? TimeSpan.Zero;
-
-            return await _timeSheetService.UpdateAsync(timeSheet)
-                ? Ok(new { Message = "Timesheet updated successfully." })
-                : StatusCode(500, new { Message = "Internal Server Error: Failed to update timesheet." });
+            return Ok(new { message = response.Message });
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTimeSheet(int id)
         {
-            var timeSheet = await _timeSheetService.GetByIdAsync(id);
-            if (timeSheet == null)
-                return NotFound(new { Message = "Timesheet not found." });
+            var response = await _timeSheetService.DeleteTimeSheetAsync(id);
+            if (!response.Success)
+                return NotFound(new { message = response.Message });
 
-            return await _timeSheetService.DeleteAsync(id)
-                ? Ok(new { Message = "Timesheet deleted successfully." })
-                : StatusCode(500, new { Message = "Internal Server Error: Failed to delete timesheet." });
+            return Ok(new { message = response.Message });
         }
     }
 }

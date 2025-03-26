@@ -1,90 +1,99 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EMS.DTOs;
 using EMS.Helpers;
 using EMS.Service;
-using EMS.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
-[ApiController]
-[Route("api/[controller]/[action]")]
-public class AuthController : ControllerBase
+namespace EMS.Controllers
 {
-    private readonly IAuthService _authService;
-
-    public AuthController(IAuthService authService)
+    [ApiController]
+    [Route("api/[controller]/[action]")]
+    public class AuthController : ControllerBase
     {
-        _authService = authService;
-    }
+        private readonly IAuthService _authService;
 
-    [HttpPost]
-    public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
-    {
-        var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
-        if (validationResult != null) throw new CustomException("Invalid request data", 400);
-
-        var tokenResponse = await _authService.LoginAsync(loginDto);
-        if (tokenResponse != null)
-            return Ok(tokenResponse);
-        else
-            throw new CustomException("Invalid credentials", 401);
-    }
-
-    [HttpPost]
-    public IActionResult Logout([FromBody] string token)
-    {
-        if (string.IsNullOrEmpty(token))
-            throw new CustomException("Token is required", 400);
-
-        if (_authService.IsTokenRevoked(token))
-            throw new CustomException("Token already revoked", 400);
-
-        _authService.Logout(token);
-        return Ok(new { message = "Logged out successfully" });
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO resetPasswordDto)
-    {
-        if (resetPasswordDto == null)
-            throw new CustomException("Invalid request data", 400);
-
-        var result = await _authService.PasswordReset(resetPasswordDto);
-        if (result == null) throw new CustomException("Password reset failed", 500);
-
-        return Ok(new { message = "Password reset successful" });
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> ResetPasswordWhenNotLoggedIn([FromBody] string email)
-    {
-        if (string.IsNullOrEmpty(email))
-            throw new CustomException("Email is required", 400);
-
-        var result = await _authService.ResetPasswordWhenNotLoggedIn(email);
-        if (result == null) throw new CustomException("Email not found", 404);
-
-        return Ok(new { message = "Password reset instructions sent to email" });
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> VerifyOTP([FromBody] VerifyOTPDTO verifyOtpDto)
-    {
-        if (string.IsNullOrEmpty(verifyOtpDto.Email) || string.IsNullOrEmpty(verifyOtpDto.EnteredOTP))
-            throw new CustomException("Email and OTP are required", 400);
-
-        var isOtpValid = await _authService.VerifyOTP(verifyOtpDto.Email, verifyOtpDto.EnteredOTP);
-        if (!isOtpValid) throw new CustomException("Invalid OTP", 400);
-
-        // Proceed to reset password after OTP verification
-        var resetPasswordDto = new ResetPasswordDTO
+        public AuthController(IAuthService authService)
         {
-            Email = verifyOtpDto.Email,
-            NewPassword = verifyOtpDto.NewPassword, // Ensure this field exists in VerifyOTPDTO or retrieve it from the reques
-        };
+            _authService = authService;
+        }
 
 
-        var result = await _authService.PasswordReset(resetPasswordDto);
-        if (result == null) throw new CustomException("Password reset failed", 500);
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
+        {
+            var loginResponse = await _authService.LoginAsync(loginDto);
+            if (loginResponse.Success)
+                return Ok(loginResponse.Data);  // Return token on successful login
 
-        return Ok(new { message = "Password reset successful" });
+            return Unauthorized(new { message = loginResponse.Message });  // Unauthorized error for invalid credentials
+        }
+
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> Logout([FromBody] string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return BadRequest(new { message = "Token is required" });  // Return 400 for missing token
+
+            var logoutResponse = await _authService.LogoutAsync(token);
+            if (logoutResponse.Success)
+                return Ok(new { message = "Logged out successfully" });
+
+            return StatusCode(500, new { message = "An error occurred while logging out" });  // Internal Server Error if something fails
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO resetPasswordDto)
+        {
+            var resetPasswordResponse = await _authService.PasswordResetAsync(resetPasswordDto);
+            if (resetPasswordResponse.Success)
+                return Ok(new { message = "Password reset successful" });
+
+            return StatusCode(500, new { message = resetPasswordResponse.Message });  // Return error if password reset fails
+        }
+
+        
+        [HttpPost]
+        public async Task<IActionResult> ResetPasswordWhenNotLoggedIn([FromBody] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return BadRequest(new { message = "Email is required" });
+
+            var resetPasswordResponse = await _authService.ResetPasswordWhenNotLoggedInAsync(email);
+            if (resetPasswordResponse.Success)
+                return Ok(new { message = "Password reset instructions sent to your email" });
+
+            return NotFound(new { message = "Email not found" });  // Return 404 if email is not found
+        }
+
+ 
+        [HttpPost]
+        public async Task<IActionResult> VerifyOTP([FromBody] VerifyOTPDTO verifyOtpDto)
+        {
+            if (string.IsNullOrEmpty(verifyOtpDto.Email) || string.IsNullOrEmpty(verifyOtpDto.EnteredOTP))
+                return BadRequest(new { message = "Email and OTP are required" });
+
+            var otpResponse = await _authService.VerifyOTPAsync(verifyOtpDto.Email, verifyOtpDto.EnteredOTP);
+            if (otpResponse.Success)
+            {
+                var resetPasswordDto = new ResetPasswordDTO
+                {
+                    Email = verifyOtpDto.Email,
+                    NewPassword = verifyOtpDto.NewPassword
+                };
+
+                var resetPasswordResponse = await _authService.PasswordResetAsync(resetPasswordDto);
+                if (resetPasswordResponse.Success)
+                    return Ok(new { message = "Password reset successful" });
+
+                return StatusCode(500, new { message = resetPasswordResponse.Message });
+            }
+
+            return BadRequest(new { message = otpResponse.Message });  // Invalid OTP error
+        }
     }
-
 }

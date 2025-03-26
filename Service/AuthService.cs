@@ -1,6 +1,8 @@
 ﻿using EMS.DTOs;
+using EMS.HelperClasses;
 using EMS.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
+using EMS.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,23 +14,23 @@ namespace EMS.Service
 {
     public interface IAuthService
     {
-        Task<TokenResponseDTO> LoginAsync(LoginDTO loginDto);
-        void Logout(string token);
-        bool IsTokenRevoked(string token);
-        Task<IActionResult> PasswordReset(ResetPasswordDTO resetPasswordDto);
-        Task<IActionResult> ResetPasswordWhenNotLoggedIn(string email);
-        Task<bool> VerifyOTP(string email, string enteredOtp);
+        Task<ServiceResponse<TokenResponseDTO>> LoginAsync(LoginDTO loginDto);
+        Task<ServiceResponse<bool>> LogoutAsync(string token);
+        Task<ServiceResponse<bool>> IsTokenRevokedAsync(string token);
+        Task<ServiceResponse<bool>> PasswordResetAsync(ResetPasswordDTO resetPasswordDto);
+        Task<ServiceResponse<bool>> ResetPasswordWhenNotLoggedInAsync(string email);
+        Task<ServiceResponse<bool>> VerifyOTPAsync(string email, string enteredOtp);
     }
 
     public class AuthService : IAuthService
     {
-        private readonly IGenericDBService<Admin> _adminService;
-        private readonly IGenericDBService<Employee> _employeeService;
+        private readonly IGenericDBRepository<Admin> _adminService;
+        private readonly IGenericDBRepository<Employee> _employeeService;
         private readonly IConfiguration _configuration;
         private readonly ICacheService _cacheService;
         private readonly IEmailService _emailService;
 
-        public AuthService(IGenericDBService<Admin> adminService, IGenericDBService<Employee> employeeService, IConfiguration configuration, ICacheService cacheService, IEmailService emailService)
+        public AuthService(IGenericDBRepository<Admin> adminService, IGenericDBRepository<Employee> employeeService, IConfiguration configuration, ICacheService cacheService, IEmailService emailService)
         {
             _adminService = adminService;
             _employeeService = employeeService;
@@ -37,7 +39,7 @@ namespace EMS.Service
             _emailService = emailService;
         }
 
-        public async Task<TokenResponseDTO> LoginAsync(LoginDTO loginDto)
+        public async Task<ServiceResponse<TokenResponseDTO>> LoginAsync(LoginDTO loginDto)
         {
             var filters = new List<FilterDTO> { new FilterDTO { PropertyName = "Email", Value = loginDto.Email } };
 
@@ -62,20 +64,20 @@ namespace EMS.Service
                     {
                         Id = employee.EmployeeId.ToString(),
                         Email = employee.Email,
-                        Role = "Employee"  // ✅ Fixed role assignment
+                        Role = "Employee"
                     };
                 }
                 else
                 {
-                    return null; // Return null to indicate invalid credentials
+                    return ServiceResponse<TokenResponseDTO>.FailureResponse("Invalid credentials", 401);
                 }
             }
 
             var token = GenerateToken(generateTokenDto);
-            return new TokenResponseDTO { Token = token };
+            return ServiceResponse<TokenResponseDTO>.SuccessResponse(new TokenResponseDTO { Token = token }, "Login successful", 200);
         }
 
-        public async Task<IActionResult> PasswordReset(ResetPasswordDTO resetPasswordDto)
+        public async Task<ServiceResponse<bool>> PasswordResetAsync(ResetPasswordDTO resetPasswordDto)
         {
             var filters = new List<FilterDTO> { new FilterDTO { PropertyName = "Email", Value = resetPasswordDto.Email } };
 
@@ -97,17 +99,17 @@ namespace EMS.Service
                 }
                 else
                 {
-                    return new BadRequestObjectResult(new { message = "User not found" });
+                    return ServiceResponse<bool>.FailureResponse("User not found", 404);
                 }
             }
 
             if (isUpdated)
-                return new OkObjectResult(new { message = "Password reset successfully" });
-            else
-                return new StatusCodeResult(500);
+                return ServiceResponse<bool>.SuccessResponse(true, "Password reset successfully", 200);
+
+            return ServiceResponse<bool>.FailureResponse("Failed to reset password", 500);
         }
 
-        public async Task<IActionResult> ResetPasswordWhenNotLoggedIn(string email)
+        public async Task<ServiceResponse<bool>> ResetPasswordWhenNotLoggedInAsync(string email)
         {
             string otp = GenerateUniqueOTP();
             _cacheService.Set(email, otp, TimeSpan.FromMinutes(5));
@@ -121,22 +123,20 @@ namespace EMS.Service
             };
 
             await _emailService.SendEmailAsync(emailMessage);
-            return new OkObjectResult(new { message = "OTP sent to your email successfully." });
+            return ServiceResponse<bool>.SuccessResponse(true, "OTP sent to your email successfully.", 200);
         }
 
-        public async Task<bool> VerifyOTP(string email, string enteredOtp)
+        public async Task<ServiceResponse<bool>> VerifyOTPAsync(string email, string enteredOtp)
         {
             var storedOtp = _cacheService.Get(email) as string;
 
             if (storedOtp != null && storedOtp == enteredOtp)
             {
                 _cacheService.Remove(email);
-                return true;
+                return ServiceResponse<bool>.SuccessResponse(true, "OTP verified successfully", 200);
             }
-            else
-            {
-                return false;
-            }
+
+            return ServiceResponse<bool>.FailureResponse("Invalid OTP", 400);
         }
 
         private string GenerateUniqueOTP()
@@ -193,14 +193,16 @@ namespace EMS.Service
             return tokenHandler.WriteToken(token);
         }
 
-        public void Logout(string token)
+        public async Task<ServiceResponse<bool>> LogoutAsync(string token)
         {
             _cacheService.Set(token, "invalid", TimeSpan.FromMinutes(120));
+            return ServiceResponse<bool>.SuccessResponse(true, "Logged out successfully", 200);
         }
 
-        public bool IsTokenRevoked(string token)
+        public async Task<ServiceResponse<bool>> IsTokenRevokedAsync(string token)
         {
-            return _cacheService.Contains(token);
+            bool isRevoked = _cacheService.Contains(token);
+            return ServiceResponse<bool>.SuccessResponse(isRevoked, "Token status checked", 200);
         }
     }
 }

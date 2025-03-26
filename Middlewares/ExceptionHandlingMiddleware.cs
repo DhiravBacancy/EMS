@@ -1,11 +1,6 @@
 ﻿using EMS.Helpers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using System;
 using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
-
 public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
