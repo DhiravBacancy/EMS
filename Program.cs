@@ -6,6 +6,7 @@ using EMS.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using EMS.Service.EMS.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,11 +23,15 @@ builder.Services.AddScoped<IExportTimesheetsToExcelService, ExportTimesheetsToEx
 //builder.Services.AddScoped<IExportToPDFService, ExportToPDFService>();
 
 builder.Services.AddScoped(typeof(IGenericDBRepository<>), typeof(GenericDBRepository<>));
-builder.Services.AddScoped(typeof(IGenericDBService<>), typeof(GenericDBService<>));
+//builder.Services.AddScoped(typeof(IGenericDBService<>), typeof(GenericDBService<>));
 
 builder.Services.AddMemoryCache(); // Register IMemoryCache
 builder.Services.AddScoped<ICacheService, CacheService>();
-builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>(); 
+builder.Services.AddScoped<IAdminService, AdminService>(); 
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<ITimeSheetService, TimeSheetService>();
 
 // Register IAuthService
 builder.Services.AddScoped<IAuthService, AuthService>();

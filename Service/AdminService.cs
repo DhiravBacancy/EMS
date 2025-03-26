@@ -4,6 +4,7 @@ using EMS.Enums;
 using EMS.HelperClasses;
 using EMS.Helpers;
 using EMS.Models;
+using EMS.Repositories;
 using EMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,22 +24,22 @@ namespace EMS.Service
 
     public class AdminService : IAdminService
     {
-        private readonly IGenericDBService<Admin> _adminService;
-        private readonly IGenericDBService<TimeSheet> _timeSheetService;
-        private readonly IGenericDBService<Employee> _employeeService;
-        private readonly IGenericDBService<Leave> _leaveService;
-        private readonly IGenericDBService<Department> _departmentService;
+        private readonly IGenericDBRepository<Admin> _adminService;
+        private readonly IGenericDBRepository<TimeSheet> _timeSheetService;
+        private readonly IGenericDBRepository<Employee> _employeeService;
+        private readonly IGenericDBRepository<Leave> _leaveService;
+        private readonly IGenericDBRepository<Department> _departmentService;
         private readonly IExportTimesheetsToExcelService _exportToExcelService;
         private readonly IPdfService _pdfService;
 
         public AdminService(
-            IGenericDBService<TimeSheet> timeSheetService,
-            IGenericDBService<Employee> employeeService,
-            IGenericDBService<Leave> leaveService,
-            IGenericDBService<Department> departmentService,
+            IGenericDBRepository<TimeSheet> timeSheetService,
+            IGenericDBRepository<Employee> employeeService,
+            IGenericDBRepository<Leave> leaveService,
+            IGenericDBRepository<Department> departmentService,
             IExportTimesheetsToExcelService exportToExcelService,
             IPdfService pdfService,
-            IGenericDBService<Admin> adminService)
+            IGenericDBRepository<Admin> adminService)
         {
             _timeSheetService = timeSheetService;
             _employeeService = employeeService;

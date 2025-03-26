@@ -31,18 +31,20 @@ namespace EMS.Controllers
         }
 
 
-        [Authorize]
+        //[Authorize]
         [HttpPost]
         public async Task<IActionResult> Logout([FromBody] string token)
         {
+            token = token?.Trim('"'); // Fix JSON wrapping issue
+
             if (string.IsNullOrEmpty(token))
-                return BadRequest(new { message = "Token is required" });  // Return 400 for missing token
+                return BadRequest(new { message = "Token is required" });
 
             var logoutResponse = await _authService.LogoutAsync(token);
             if (logoutResponse.Success)
                 return Ok(new { message = "Logged out successfully" });
 
-            return StatusCode(500, new { message = "An error occurred while logging out" });  // Internal Server Error if something fails
+            return StatusCode(500, new { message = "An error occurred while logging out" });
         }
 
         [Authorize]
