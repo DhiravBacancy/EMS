@@ -64,7 +64,6 @@ appsettings.Local.json
 
 # **Publish and Deployment**
 publish/
-wwwroot/
 dist/
 
 # **Crash Reports**

@@ -1,0 +1,144 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        input {
+            width: calc(100% - 20px);
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+            input:focus {
+                border-color: #667eea;
+            }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+            button:hover {
+                background: #5a67d8;
+            }
+
+        .container p {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+            .container p a {
+                color: #667eea;
+                text-decoration: none;
+                font-weight: bold;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <input type="text" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button id="loginButton">Login</button>
+        <p>Don't have an account? <a href="#">Sign Up</a></p>
+    </div>
+    <script>
+        async function login(event) {
+            event.preventDefault(); // Prevent form submission and page reload
+
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            // Check if email or password is empty
+            if (!email || !password) {
+                alert("Please enter both email and password.");
+                return;
+            }
+
+            try {
+                // Send the login request
+                const response = await fetch('/api/Auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })  // Ensure JSON body is sent
+                });
+
+                // Handle the response
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.token);
+
+                    // Decode JWT token to extract role
+                    const tokenParts = data.token.split(".");
+                    if (tokenParts.length === 3) {
+                        const decodedPayload = JSON.parse(atob(tokenParts[1])); // Decode JWT payload
+                        const role = decodedPayload["role"]; // Use the string "role" as the key
+                        console.log(decodedPayload); // Check the entire decoded payload
+                        console.log(role); // Check if role is available
+
+                        // Redirect based on role
+                        if (role === "Admin") {
+                            window.location.href = "/pages/admin-dashboard.html";
+                        } else if (role === "Employee") {
+                            window.location.href = "/pages/employee-dashboard.html";
+                        } else {
+                            alert("Invalid role detected!");
+                        }
+                    } else {
+                        alert("Invalid token format!");
+                    }
+                } else {
+                    alert("Invalid credentials. Please try again.");
+                }
+            } catch (error) {
+                console.error("Login failed:", error);
+                alert("An error occurred during login. Please try again later.");
+            }
+        }
+
+        // Attach the event listener to the login button
+        document.getElementById("loginButton").addEventListener("click", login);
+    </script>
+</body>
+</html>

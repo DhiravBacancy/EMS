@@ -1,0 +1,376 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2); /* Updated background gradient */
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        h2, h3 {
+            color: #333; /* Keeping dark gray for heading text */
+        }
+
+        .employee-details, .timesheet-form {
+            text-align: left;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            background: #eef1f5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #667eea; /* Updated to match the theme */
+            color: white;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #667eea; /* Updated button color */
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+            button:hover {
+                background-color: #5a67d8; /* Updated hover color */
+            }
+
+        .logout-button {
+            background-color: #dc3545; /* Retaining the red color for logout */
+        }
+
+            .logout-button:hover {
+                background-color: #c82333; /* Darker red on hover */
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome to Employee Dashboard</h2>
+
+        <div class="employee-details">
+            <h3>Employee Details</h3>
+            <p><strong>Name:</strong> <span id="employeeName"></span></p>
+            <p><strong>Email:</strong> <span id="employeeEmail"></span></p>
+            <p><strong>Department:</strong> <span id="employeeDepartment"></span></p>
+            <p><strong>Pending Paid Leaves:</strong> <span id="employeeLeaves"></span></p>
+        </div>
+
+        <h3>Your Timesheets</h3>
+        <table id="timesheetTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Hours Worked</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Timesheet rows will be dynamically added here -->
+            </tbody>
+        </table>
+
+        <div class="timesheet-form">
+            <h3>Add New Timesheet</h3>
+            <input type="date" id="timesheetDate" required>
+            <input type="time" id="startTime" required>
+            <input type="time" id="endTime" required>
+            <input type="text" id="description" placeholder="Description">
+            <button onclick="addTimeSheet()">Add Timesheet</button>
+        </div>
+
+        <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
+
+<script>
+
+    async function fetchEmployeeDetails() {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "/pages/login.html";
+            return;
+        }
+
+        const empId = getEmployeeIdFromToken(token);
+
+        // Fetch Employee Details
+        const response = await fetch(`/api/Employee/GetEmployeeById/${empId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+
+        if (response.ok) {
+            const employee = await response.json();  // API returns { message, data }
+            //const employee = employeeResponse.data;  // Extract actual employee object
+
+            console.log(employee);
+
+            let departmentName = "N/A"; // Default value
+
+             //Fetch Employee Department only if departmentId is valid
+            if (employee && employee.departmentId) {  // Ensure departmentId is valid
+                try {
+                    const empDept = await fetch(`/api/Department/${employee.departmentId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (empDept.ok) {
+                        const departmentResponse = await empDept.json();
+                        const department = departmentResponse.data; // Extract department object
+
+                        departmentName = department?.departmentName || "N/A"; // Handle null values
+                    } else {
+                        console.error("Failed to fetch department details:", empDept.status);
+                    }
+                } catch (error) {
+                    console.error("Error fetching department details:", error);
+                }
+            }
+
+
+            // Populate UI elements
+            document.getElementById("employeeName").innerText = `${employee.firstName} ${employee.lastName}`;
+            document.getElementById("employeeEmail").innerText = employee.email;
+            document.getElementById("employeeDepartment").innerText = departmentName;
+            document.getElementById("employeeLeaves").innerText = employee.paidLeavesRemaining ?? "N/A";
+        } else {
+            alert("Error fetching employee details.");
+        }
+
+    }
+
+    async function fetchEmployeeTimesheets() {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "/pages/login.html";
+            return;
+        }
+
+        const response = await fetch(`/api/timesheet/GetAllTimeSheetsOfEmployee/${getEmployeeIdFromToken(token)}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const tableBody = document.getElementById("timesheetTable").getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = ""; // Clear any previous timesheets
+
+        if (response.ok) {
+            const timesheets = await response.json();
+            timesheets.forEach(timesheet => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                <td>${formatDate(timesheet.date)}</td>
+                <td>${formatTime(timesheet.startTime)}</td>
+                <td>${formatTime(timesheet.endTime)}</td>
+                <td>${timesheet.endTime ? calculateHoursWorked(timesheet.startTime, timesheet.endTime) : 'N/A'}</td>
+            `;
+            });
+        } else {
+            alert("No timesheets found or error fetching data.");
+        }
+    }
+
+    function formatDate(dateString) {
+        const d = new Date(dateString);
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function formatTime(time) {
+        if (!time) return 'N/A';
+
+        const [hours, minutes] = time.split(":");
+        const date = new Date();
+        date.setHours(hours, minutes, 0);
+
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    function calculateHoursWorked(startTime, endTime) {
+        if (!startTime || !endTime) return 'N/A';
+
+        const [startH, startM] = startTime.split(":").map(Number);
+        const [endH, endM] = endTime.split(":").map(Number);
+
+        const startMinutes = startH * 60 + startM;
+        const endMinutes = endH * 60 + endM;
+
+        const diffMinutes = endMinutes - startMinutes;
+        const diffHours = diffMinutes / 60;
+
+        return diffHours.toFixed(2) + " hours";
+    }
+
+
+    async function addTimeSheet() {
+        const date = document.getElementById("timesheetDate").value;
+        const startTime = document.getElementById("startTime").value;
+        const endTime = document.getElementById("endTime").value;
+        const description = document.getElementById("description").value;
+
+        if (!date || !startTime || !endTime) {
+            alert("Please fill all fields.");
+            return;
+        }
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "/pages/login.html";
+            return;
+        }
+
+        const response = await fetch('/api/timesheet/addtimesheet', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                EmployeeId: getEmployeeIdFromToken(token),
+                Date: date,
+                StartTime: startTime,
+                EndTime: endTime,
+                description: description
+            })
+        });
+
+        if (response.ok) {
+            alert("Timesheet added successfully.");
+            fetchEmployeeTimesheets(); // Refresh the timesheets table
+        } else {
+            const data = await response.json();
+            alert(data.Message || "Failed to add timesheet.");
+        }
+    }
+
+    function getEmployeeIdFromToken(token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.log(payload); // Log the payload to inspect the structure
+
+            // Extract the employee ID from the 'nameid' claim
+            return payload.nameid; // This corresponds to the 'ClaimTypes.NameIdentifier'
+        } catch (error) {
+            console.error("Error parsing token:", error);
+            return null;
+        }
+    }
+
+    async function logout() {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("No active session found.");
+                return;
+            }
+
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(token)  // Ensure the token is passed correctly
+            });
+
+            if (response.ok) {
+                localStorage.removeItem("token"); // Remove token from localStorage
+                window.location.href = "/pages/login.html"; // Redirect to login page
+            } else {
+                const data = await response.json();
+                alert(data.Message || "Logout failed. Please try again.");
+            }
+        } catch (error) {
+            console.error("Logout failed:", error);
+            alert("An error occurred during logout. Please try again.");
+        }
+    }
+    function getRoleFromToken(token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1])); // Decode JWT payload
+            console.log(payload); // Log payload to check structure
+
+            return payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        } catch (error) {
+            console.error("Error parsing token:", error);
+            return null;
+        }
+    }
+
+
+    // Check if the user is an Admin when the page loads
+    window.onload = () => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "/pages/login.html";  // Redirect to login if no token
+            return;
+        }
+
+        const role = getRoleFromToken(token);
+
+        if (role !== 'Employee') {
+            // Redirect to a different page if the user is not an admin
+            window.location.href = "/pages/login.html";  // Redirect to Employee Dashboard or login
+            return;
+        }
+
+        fetchEmployeeDetails();
+        fetchEmployeeTimesheets();
+    };
+
+
+
+</script>
+</body>
+</html>

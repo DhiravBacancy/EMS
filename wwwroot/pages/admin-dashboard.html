@@ -1,0 +1,433 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #667eea, #764ba2); /* Updated background gradient */
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            margin-top: 50px;
+        }
+
+        h2, h3 {
+            color: #fff; /* Keeping text color as white for headings */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        table, th, td {
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            color: #fff;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        button {
+            background-color: #667eea; /* Updated button background color */
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+            button:hover {
+                background-color: #5a67d8; /* Updated hover color */
+            }
+
+        .logout-button {
+            background-color: #dc3545; /* Retaining red color for logout */
+        }
+
+            .logout-button:hover {
+                background-color: #c82333; /* Darker red on hover */
+            }
+
+        .search-section, .employee-details {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        a {
+            color: #667eea; /* Updated link color to match the theme */
+            text-decoration: none;
+        }
+
+            a:hover {
+                text-decoration: underline;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome to Admin Dashboard</h2>
+
+        <div class="admin-details">
+            <h3>Admin Details</h3>
+            <p><strong>Name:</strong> <span id="adminName"></span></p>
+            <p><strong>Email:</strong> <span id="adminEmail"></span></p>
+        </div>
+
+        <button class="logout-button" onclick="logout()">Logout</button>
+
+        <div class="search-section">
+            <h3>Search Employee</h3>
+            <input type="email" id="employeeEmail" placeholder="Enter Employee Email">
+            <button onclick="fetchEmployeeDetails()">Search</button>
+        </div>
+
+        <div class="employee-details hidden" id="employeeDetailsSection">
+            <h3>Employee Details</h3>
+            <p><strong>Name:</strong> <span id="employeeName"></span></p>
+            <p><strong>Email:</strong> <span id="employeeEmailDisplay"></span></p>
+            <p><strong>Paid Leaves Remaining:</strong> <span id="employeePaidLeavesRemaining"></span></p>
+
+            <!-- Dropdown to select report type (Weekly/Monthly) -->
+            <label for="reportType">Select Report Type:</label>
+            <select id="reportType">
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+            </select>
+
+            <button id="downloadTimesheetButton" onclick="downloadTimesheet()">Download Timesheet (Excel)</button>
+            <button onclick="fetchPendingLeaves()">Fetch Pending Leaves</button>
+
+            <!-- Report download button with dynamic text -->
+            <button id="downloadReportButton" onclick="downloadEmployeeReport()">Download Report Analysis</button>
+        </div>
+
+
+        <div id="leaveRequests"></div>
+    </div>
+
+    <script>
+        async function fetchAdminDetails() {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                window.location.href = "/pages/login.html";
+                return;
+            }
+
+            const empId = getAdminIdFromToken(token);
+
+            // Fetch Admin Details
+            const response = await fetch(`/api/Admin/${empId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const admin = await response.json();
+                if (admin.data) {
+                    document.getElementById("adminName").innerText = admin.data.firstName + " " + admin.data.lastName;
+                    document.getElementById("adminEmail").innerText = admin.data.email;
+                } else {
+                    alert("No admin data found.");
+                }
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function getAdminIdFromToken(token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.nameid;
+            } catch (error) {
+                console.error("Error parsing token:", error);
+                return null;
+            }
+        }
+
+        async function logout() {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    alert("No active session found.");
+                    return;
+                }
+
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(token)
+                });
+
+                if (response.ok) {
+                    localStorage.removeItem("token");
+                    window.location.href = "/pages/login.html";
+                } else {
+                    const text = await response.text(); // Read raw response text
+                    let data;
+                    try {
+                        data = JSON.parse(text); // Try to parse JSON
+                    } catch {
+                        data = { message: text || "Logout failed. Please try again." };
+                    }
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error("Logout failed:", error);
+                alert("An error occurred during logout. Please try again.");
+            }
+        }
+
+
+
+
+        function getRoleFromToken(token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+            } catch (error) {
+                console.error("Error parsing token:", error);
+                return null;
+            }
+        }
+
+        async function fetchEmployeeDetails() {
+            const token = localStorage.getItem("token");
+            const email = document.getElementById("employeeEmail").value.trim();
+
+            if (!email) {
+                alert("Please enter an employee email.");
+                return;
+            }
+
+            try {
+                // Use the correct endpoint format here
+                const response = await fetch(`/api/Admin/getEmployeeDetail/${email}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();  // Get the entire response object
+                    console.log(responseData);
+
+                    if (responseData.data && responseData.data.length > 0) {  // Check if 'data' exists and has at least one item
+                        const employee = responseData.data[0];  // Access the first employee object
+
+                        document.getElementById("employeeName").innerText = employee.firstName + " " + employee.lastName;
+                        document.getElementById("employeeEmailDisplay").innerText = employee.email;
+                        document.getElementById("employeePaidLeavesRemaining").innerText = employee.paidLeavesRemaining || "N/A";
+                        document.getElementById("employeeDetailsSection").classList.remove("hidden");
+                    } else {
+                        alert("Employee not found.");
+                        document.getElementById("employeeDetailsSection").classList.add("hidden");
+                    }
+                } else {
+                    alert("Employee not found.");
+                    document.getElementById("employeeDetailsSection").classList.add("hidden");
+                }
+
+            } catch (error) {
+                console.error("Error fetching employee details:", error);
+                alert("Failed to fetch employee details.");
+            }
+        }
+
+        async function fetchPendingLeaves() {
+            const employeeEmail = document.getElementById("employeeEmail").value.trim();
+
+            if (!employeeEmail) {
+                alert("Please enter an employee email.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/Admin/getEmployeePendingLeaveRequest/${employeeEmail}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const responseData = await response.json();  // Fetch response object
+                console.log(responseData); // Debugging
+
+                if (responseData.data && responseData.data.length > 0) {
+                    displayLeaves(responseData.data);  // Pass the actual array, not the entire object
+                } else {
+                    alert("No pending leave requests found.");
+                }
+            } catch (error) {
+                console.error("Error fetching pending leaves:", error);
+                alert("Failed to fetch pending leaves.");
+            }
+
+        }
+
+        function displayLeaves(leaves) {
+            const leaveRequestsDiv = document.getElementById("leaveRequests");
+            leaveRequestsDiv.innerHTML = ""; // Clear previous results
+
+            if (leaves.length === 0) {
+                leaveRequestsDiv.innerHTML = "<p>No pending leave requests found.</p>";
+                return;
+            }
+
+            let table = "<table><thead><tr><th>Leave ID</th><th>Start Date</th><th>End Date</th><th>Total Days</th><th>Leave Type</th><th>Reason</th><th>Applied At</th></tr></thead><tbody>";
+
+            leaves.forEach(leave => {
+                table += `
+                        <tr>
+                            <td>${leave.leaveId}</td>
+                            <td>${new Date(leave.startDate).toLocaleDateString()}</td>
+                            <td>${new Date(leave.endDate).toLocaleDateString()}</td>
+                            <td>${leave.totalDays}</td>
+                            <td>${leave.leaveType}</td>
+                            <td>${leave.reason || 'N/A'}</td>
+                            <td>${new Date(leave.appliedAt).toLocaleString()}</td>
+                        </tr>
+                    `;
+            });
+
+            table += "</tbody></table>";
+            leaveRequestsDiv.innerHTML = table;
+        }
+
+        async function downloadTimesheet() {
+            const employeeEmail = document.getElementById("employeeEmail").value.trim();
+            if (!employeeEmail) {
+                alert("Please enter an employee email.");
+                return;
+            }
+            // Encode the email to handle special characters in the URL
+            //const encodedEmail = encodeURIComponent(employeeEmail);
+            const downloadUrl = `/api/Admin/exportEmployeeTimeSheet/${employeeEmail}`;
+
+            fetch(downloadUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.blob(); // Get the response as a Blob
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'Timesheets.xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    alert('Failed to download timesheets.');
+                });
+        }
+
+        function downloadEmployeeReport() {
+            const reportPeriod = document.getElementById("reportType").value;
+            const employeeEmail = document.getElementById("employeeEmailDisplay").textContent.trim();
+
+            if (!employeeEmail) {
+                alert("Employee email is missing.");
+                return;
+            }
+
+            const requestBody = {
+                email: employeeEmail,
+                period: reportPeriod
+            };
+
+            fetch('/api/Admin/generateEmployeeWorkReport', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.blob(); // Get the response as a Blob
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = `Employee_Report_${reportPeriod}.pdf`; // Dynamically name file
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    alert('Failed to download report.');
+                });
+        }
+
+        window.onload = () => {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                window.location.href = "/pages/login.html";
+                return;
+            }
+
+            const role = getRoleFromToken(token);
+
+            if (role !== 'Admin') {
+                window.location.href = "/pages/login.html";
+                return;
+            }
+
+            fetchAdminDetails();
+        };
+    </script>
+</body>
+</html>
+
