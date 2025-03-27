@@ -38,6 +38,7 @@ namespace EMS.Controllers
             return Ok(response.Data);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTimeSheet(int id, [FromBody] UpdateTimeSheetDTO updateTimeSheetDto)
         {

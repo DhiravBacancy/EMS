@@ -31,6 +31,7 @@ namespace EMS.Controllers
         }
 
         // Get All Departments
+
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllDepartments()
         {

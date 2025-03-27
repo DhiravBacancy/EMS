@@ -318,23 +318,32 @@
             const response = await fetch('/api/auth/logout', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`  // Ensure Authorization header is included
                 },
-                body: JSON.stringify(token)  // Ensure the token is passed correctly
+                body: JSON.stringify(token)
             });
 
             if (response.ok) {
                 localStorage.removeItem("token"); // Remove token from localStorage
                 window.location.href = "/pages/login.html"; // Redirect to login page
             } else {
-                const data = await response.json();
-                alert(data.Message || "Logout failed. Please try again.");
+                let message = "Logout failed. Please try again.";
+                if (response.status !== 401) { // Only attempt to parse JSON if not Unauthorized
+                    const data = await response.json().catch(() => null);
+                    message = data?.message || message;
+                } else {
+                    message = "Session expired. Please log in again.";
+                }
+                alert(message);
             }
         } catch (error) {
             console.error("Logout failed:", error);
             alert("An error occurred during logout. Please try again.");
         }
     }
+
+
     function getRoleFromToken(token) {
         try {
             const payload = JSON.parse(atob(token.split('.')[1])); // Decode JWT payload

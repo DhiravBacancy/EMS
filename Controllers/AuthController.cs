@@ -31,7 +31,7 @@ namespace EMS.Controllers
         }
 
 
-        //[Authorize]
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Logout([FromBody] string token)
         {

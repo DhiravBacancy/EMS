@@ -1,12 +1,14 @@
 ﻿using EMS.DTOs;
 using EMS.Helpers;
 using EMS.Service.EMS.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EMS.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
