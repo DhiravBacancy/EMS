@@ -23,7 +23,7 @@ namespace EMS.DTOs
         [ValidPhoneNumberHelper]
         public string Phone { get; set; }
 
-        //custom validation
+     
         [ValidDateOfBirthHelper(MinimumAge = 18)]
         public DateTime? DateOfBirth { get; set; }
         public string Address { get; set; }
@@ -59,14 +59,14 @@ namespace EMS.DTOs
         public int TotalLoggedHours { get; set; }
         public List<EmployeeActivityDTO> TopEmployees { get; set; }
         public List<LeaveRequestDTO> PendingLeaveRequests { get; set; }
-        public string EmployeeEmail { get; set; } // Add the email here if necessary
+        public string EmployeeEmail { get; set; }
     }
 
     public class EmployeeActivityDTO
     {
         public string EmployeeName { get; set; }
         public int TotalHoursWorked { get; set; }
-        public string EmployeeEmail { get; set; } // Include email in case you need it
+        public string EmployeeEmail { get; set; }
     }
 
 

@@ -34,8 +34,8 @@ namespace EMS.Configurations
                 .IsRequired(true);
 
             builder.Property(a => a.Role)
-                .HasConversion<string>() // Store as string (VARCHAR)
-                .HasMaxLength(20)        // Limit length to 20 (matching enum length)
+                .HasConversion<string>()
+                .HasMaxLength(20)      
                 .IsRequired(true);
 
         }

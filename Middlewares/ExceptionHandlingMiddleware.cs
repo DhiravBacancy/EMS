@@ -32,12 +32,12 @@ public class ExceptionHandlingMiddleware
 
     private static async Task HandleExceptionAsync(HttpContext context, int statusCode, string message)
     {
-        // Check content type before processing the error response
+       
         if (!context.Response.HasStarted)
         {
             string? contentType = context.Response.ContentType;
 
-            // If the request expects JSON (API calls), return JSON error response
+            
             if (string.IsNullOrEmpty(contentType) || contentType.Contains("application/json"))
             {
                 var response = new
@@ -53,7 +53,6 @@ public class ExceptionHandlingMiddleware
             }
             else
             {
-                // If the response is a file (Excel or PDF), just set the status code without modifying response
                 context.Response.StatusCode = statusCode;
             }
         }

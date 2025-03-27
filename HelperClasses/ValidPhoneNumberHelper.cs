@@ -8,7 +8,6 @@ namespace EMS.Helpers
     {
         private readonly string _pattern;
 
-        // Constructor that allows an optional pattern parameter for phone number validation
         public ValidPhoneNumberHelper(string pattern = @"^\d{10}$") : base("Invalid phone number format.")
         {
             _pattern = pattern;
@@ -20,13 +19,12 @@ namespace EMS.Helpers
 
             if (string.IsNullOrEmpty(phoneNumber))
             {
-                return ValidationResult.Success; // Skip validation if null or empty
+                return ValidationResult.Success;
             }
 
-            // Check if the phone number matches the given pattern
             if (Regex.IsMatch(phoneNumber, _pattern))
             {
-                return ValidationResult.Success; // Valid phone number
+                return ValidationResult.Success;
             }
 
             return new ValidationResult($"Phone number must match the pattern '{_pattern}'.");

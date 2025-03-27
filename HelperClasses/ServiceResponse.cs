@@ -6,10 +6,9 @@
         public string Message { get; set; }
         public bool Success { get; set; }
         public int StatusCode { get; set; }
-        public string FileDownloadName { get; set; } // Added for file download name
-        public string ContentType { get; set; } // Added for content type (MIME type)
+        public string FileDownloadName { get; set; } 
+        public string ContentType { get; set; }
 
-        // Constructor for success response
         public static ServiceResponse<T> SuccessResponse(T data, string message = null, int statusCode = 200, string fileDownloadName = null, string contentType = null)
         {
             return new ServiceResponse<T>
@@ -22,7 +21,6 @@
                 ContentType = contentType
             };
         }
-        // Constructor for failure response
         public static ServiceResponse<T> FailureResponse(string message, int statusCode = 400)
         {
             return new ServiceResponse<T>
@@ -34,7 +32,6 @@
             };
         }
 
-        // Constructor for custom response
         public static ServiceResponse<T> CustomResponse(T data, string message, bool success, int statusCode, string fileDownloadName = null, string contentType = null)
         {
             return new ServiceResponse<T>

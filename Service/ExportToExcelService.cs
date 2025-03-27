@@ -18,7 +18,7 @@ namespace EMS.Services
         {
             try
             {
-                // Set the License Context to NonCommercial (if using EPPlus under the free license)
+                
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
                 using (var package = new ExcelPackage())
@@ -57,7 +57,7 @@ namespace EMS.Services
             }
             catch (Exception ex)
             {
-                // Log and handle exception as needed
+                
                 Console.WriteLine($"Error generating Excel file: {ex.Message}");
                 throw;
             }

@@ -3,9 +3,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EMS.DTOs
 {
-
-
-    // DTO for adding a new timesheet
     public class AddTimeSheetDTO
     {
         [Required]
@@ -21,8 +18,6 @@ namespace EMS.DTOs
         public TimeSpan EndTime { get; set; }
         public String Description { get; set; }
     }
-
-    // DTO for updating an existing timesheet
     public class UpdateTimeSheetDTO
     {
         public TimeSpan? StartTime { get; set; }

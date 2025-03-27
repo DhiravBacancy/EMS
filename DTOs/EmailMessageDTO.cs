@@ -15,6 +15,6 @@ namespace EMS.DTOs
         public string Body { get; set; } = string.Empty;
 
         [Required]
-        public bool IsHtml { get; set; } = true; // Default to HTML format
+        public bool IsHtml { get; set; } = true;
     }
 }

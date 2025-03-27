@@ -23,9 +23,9 @@ namespace EMS.Controllers
         {
             var loginResponse = await _authService.LoginAsync(loginDto);
             if (loginResponse.Success)
-                return Ok(loginResponse.Data);  // Return token on successful login
+                return Ok(loginResponse.Data); 
 
-            return Unauthorized(new { message = loginResponse.Message });  // Unauthorized error for invalid credentials
+            return Unauthorized(new { message = loginResponse.Message });
         }
 
 

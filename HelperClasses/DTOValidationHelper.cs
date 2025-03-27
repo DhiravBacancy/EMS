@@ -6,7 +6,6 @@ namespace EMS.Helpers
 {
     public static class DTOValidationHelper
     {
-        // Helper method to validate model and return error details
         public static IActionResult ValidateModelState(ModelStateDictionary modelState)
         {
             if (!modelState.IsValid)
@@ -23,7 +22,7 @@ namespace EMS.Helpers
                 return new BadRequestObjectResult(new { message = "Model validation failed.", errors = validationErrors });
             }
 
-            return null; // No validation errors
+            return null;
         }
     }
 }

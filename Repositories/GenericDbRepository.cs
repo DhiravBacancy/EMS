@@ -82,14 +82,14 @@ namespace EMS.Repositories
         {
             await _context.Set<T>().AddAsync(entity);
             var result = await _context.SaveChangesAsync();
-            return result > 0; // Return true if 1 or more rows are affected
+            return result > 0; 
         }
 
         public async Task<bool> UpdateAsync(T entity)
         {
             _context.Set<T>().Update(entity);
             var result = await _context.SaveChangesAsync();
-            return result > 0; // Return true if any rows were updated
+            return result > 0;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -99,9 +99,9 @@ namespace EMS.Repositories
             {
                 _context.Set<T>().Remove(entity);
                 var result = await _context.SaveChangesAsync();
-                return result > 0; // Return true if deletion is successful
+                return result > 0;
             }
-            return false;  // Entity not found, deletion failed
+            return false;
         }
 
         public async Task<PagedResultDTO<T>> GetPaginatedAsync(int pageNumber, int pageSize)

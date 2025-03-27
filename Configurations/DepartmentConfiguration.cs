@@ -20,9 +20,9 @@ namespace EMS.Configurations
 
             // Department - Employee relationship (One-to-Many)
             builder.HasMany(d => d.Employees)
-                .WithOne(e => e.Department) // Assuming the Employee model has a navigation property 'Department'
+                .WithOne(e => e.Department) 
                 .HasForeignKey(e => e.DepartmentId)
-                .OnDelete(DeleteBehavior.SetNull); // Set to NULL if the department is deleted
+                .OnDelete(DeleteBehavior.SetNull); 
         }
     }
 }

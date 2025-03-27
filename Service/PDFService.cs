@@ -24,7 +24,7 @@ namespace EMS.Service
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontSize(12));
 
-                    // Header with Employee Details and Summary
+           
                     page.Header()
                         .PaddingBottom(10)
                         .BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
@@ -40,7 +40,7 @@ namespace EMS.Service
                             col.Item().Text($"Department: {report.Department}")
                                 .FontSize(12).FontColor(Colors.Black);
 
-                            // Summary row for work and leave details
+          
                             col.Item().Row(row =>
                             {
                                 row.RelativeItem().Text($"Total Hours Worked: {report.TotalHoursWorked}")
@@ -52,12 +52,12 @@ namespace EMS.Service
                             });
                         });
 
-                    // Content - Timesheet Table
+
                     page.Content()
                         .PaddingVertical(10)
                         .Table(table =>
                         {
-                            // Define table columns
+        
                             table.ColumnsDefinition(columns =>
                             {
                                 columns.ConstantColumn(30); // Index

@@ -8,7 +8,6 @@ namespace EMS.Helpers
     {
         private readonly string _domain;
 
-        // Constructor that allows an optional domain parameter
         public ValidEmailHelper(string domain = "@gmail.com") : base("Invalid email format.")
         {
             _domain = domain;
@@ -20,13 +19,12 @@ namespace EMS.Helpers
 
             if (string.IsNullOrEmpty(email))
             {
-                return ValidationResult.Success; // Skip validation if null or empty
+                return ValidationResult.Success;
             }
 
-            // Check if the email ends with the specified domain (default is @gmail.com)
             if (email.EndsWith(_domain, StringComparison.OrdinalIgnoreCase))
             {
-                return ValidationResult.Success; // Valid email with the expected domain
+                return ValidationResult.Success;
             }
 
             return new ValidationResult($"Email must end with '{_domain}'.");

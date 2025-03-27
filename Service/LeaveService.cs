@@ -28,7 +28,7 @@ namespace EMS.Service
 
         public async Task<ServiceResponse<Leave>> LeaveRequestAsync(AddLeaveDTO addLeaveDto)
         {
-            // Get all existing leave records for the employee
+
             var existingLeaves = await _leaveService.GetByMultipleConditionsAsync(
                 new List<FilterDTO>
                 {
@@ -40,11 +40,10 @@ namespace EMS.Service
             foreach (var existingLeave in existingLeaves)
             {
                 if (!(
-                    (addLeaveDto.StartDate < existingLeave.StartDate && addLeaveDto.EndDate < existingLeave.StartDate) || // new leave is before the existing leave
-                    (addLeaveDto.StartDate > existingLeave.EndDate && addLeaveDto.EndDate > existingLeave.EndDate)        // new leave is after the existing leave
+                    (addLeaveDto.StartDate < existingLeave.StartDate && addLeaveDto.EndDate < existingLeave.StartDate) ||
+                    (addLeaveDto.StartDate > existingLeave.EndDate && addLeaveDto.EndDate > existingLeave.EndDate)       
                 ))
                 {
-                    // If the new leave overlaps with any existing leave, return an error
                     return ServiceResponse<Leave>.FailureResponse("Leave request overlaps with an existing leave.", 400);
                 }
             }

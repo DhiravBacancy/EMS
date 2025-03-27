@@ -51,22 +51,21 @@ namespace EMS.Configurations
 
             // Employee - Department relationship (Many-to-One)
             builder.HasOne(e => e.Department)
-                .WithMany(d => d.Employees) // Assuming the Department model has a navigation property 'Employees'
+                .WithMany(d => d.Employees) 
                 .HasForeignKey(e => e.DepartmentId)
-                .OnDelete(DeleteBehavior.SetNull); // Set to NULL if the department is deleted
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Employee - Leave relationship (One-to-Many)
             builder.HasMany(e => e.Leaves)
-                .WithOne(l => l.Employee) // Assuming the Leave model has a navigation property 'Employee'
+                .WithOne(l => l.Employee) 
                 .HasForeignKey(l => l.EmployeeId)
-                .OnDelete(DeleteBehavior.Cascade); // Delete related leaves if the employee is deleted
+                .OnDelete(DeleteBehavior.Cascade); 
 
             // Employee - TimeSheet relationship (One-to-Many)
             builder.HasMany(e => e.TimeSheets)
-                .WithOne(ts => ts.Employee) // Assuming the TimeSheet model has a navigation property 'Employee'
+                .WithOne(ts => ts.Employee) 
                 .HasForeignKey(ts => ts.EmployeeId)
-                .OnDelete(DeleteBehavior.Cascade); // Delete related timesheets if the employee is deleted
-
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(e => e.TechStack)
                 .HasColumnType("TEXT")
@@ -74,8 +73,8 @@ namespace EMS.Configurations
 
             builder.Property(e => e.Role)
                  .HasConversion(
-                    v => v.ToString(), // Store the enum as a string
-                    v => (RolesEnum)Enum.Parse(typeof(RolesEnum), v) // Convert back from string to enum
+                    v => v.ToString(),
+                    v => (RolesEnum)Enum.Parse(typeof(RolesEnum), v)
                 )
                 .IsRequired();
         }

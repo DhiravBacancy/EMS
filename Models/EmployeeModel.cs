@@ -23,7 +23,6 @@ namespace EMS.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
-        // Use System.Text.Json's JsonStringEnumConverter
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public RolesEnum Role { get; set; } = RolesEnum.Employee;
     }

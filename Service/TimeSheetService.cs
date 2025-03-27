@@ -28,7 +28,7 @@ namespace EMS.Services
 
         public async Task<ServiceResponse<TimeSheet>> AddTimeSheetAsync(AddTimeSheetDTO addTimeSheetDto)
         {
-            // Check if the timesheet already exists for the employee on the same date
+           
             var existingTimeSheet = (await _timeSheetRepository.GetByMultipleConditionsAsync(new List<FilterDTO>
             {
                 new FilterDTO { PropertyName = "EmployeeId", Value = addTimeSheetDto.EmployeeId },
@@ -38,7 +38,7 @@ namespace EMS.Services
             if (existingTimeSheet != null)
                 return ServiceResponse<TimeSheet>.FailureResponse("Timesheet already exists for the given date.", 400);
 
-            // Create a new timesheet entry
+  
             var newTimeSheet = new TimeSheet
             {
                 EmployeeId = addTimeSheetDto.EmployeeId,
