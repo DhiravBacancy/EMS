@@ -1,25 +1,67 @@
-﻿using System;
+﻿using EMS.DTOs;
 using System.ComponentModel.DataAnnotations;
-using EMS.DTOs;
 
-namespace EMS.Helpers
+public class EndTimeAfterStartTimeHelper : ValidationAttribute
 {
-    // Custom validation attribute to ensure EndTime > StartTime
-    public class EndTimeAfterStartTimeHelper : ValidationAttribute
+    protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        // If EndTime is a TimeSpan (used for timesheets)
+        if (value is TimeSpan endTime)
         {
-            // Access the AddTimeSheetDTO object from the validation context
-            var timeSheet = (AddTimeSheetDTO)validationContext.ObjectInstance;
+            TimeSpan? startTime = null;
 
-            // Check if EndTime is greater than StartTime
-            if (timeSheet.EndTime != null && timeSheet.EndTime <= timeSheet.StartTime)
+            // Check if the object is AddTimeSheetDTO
+            if (validationContext.ObjectInstance is AddTimeSheetDTO addTimeSheet)
             {
-                return new ValidationResult("EndTime must be greater than StartTime.");
+                startTime = addTimeSheet.StartTime;
+            }
+            // Check if the object is UpdateTimeSheetDTO
+            else if (validationContext.ObjectInstance is UpdateTimeSheetDTO updateTimeSheet)
+            {
+                startTime = updateTimeSheet.StartTime;
+            }
+            else
+            {
+                return new ValidationResult("Invalid object type for validation.");
             }
 
-
-            return ValidationResult.Success; // Validation passes
+            // Validate that EndTime is after StartTime
+            if (startTime.HasValue && endTime <= startTime)
+            {
+                return new ValidationResult("EndTime must be after StartTime.");
+            }
         }
+        // If EndTime is a DateTime (used for leave requests)
+        else if (value is DateTime endDate)
+        {
+            DateTime? startDate = null;
+
+            // Check if the object is AddLeaveDTO
+            if (validationContext.ObjectInstance is AddLeaveDTO addLeaveDto)
+            {
+                startDate = addLeaveDto.StartDate;
+            }
+            // Check if the object is UpdateLeaveDTO
+            else if (validationContext.ObjectInstance is UpdateLeaveDTO updateLeaveDto)
+            {
+                startDate = updateLeaveDto.StartDate;
+            }
+            else
+            {
+                return new ValidationResult("Invalid object type for validation.");
+            }
+
+            // Validate that EndDate is after StartDate
+            if (startDate.HasValue && endDate <= startDate)
+            {
+                return new ValidationResult("EndDate must be after StartDate.");
+            }
+        }
+        else
+        {
+            return new ValidationResult("Invalid object type for validation.");
+        }
+
+        return ValidationResult.Success;
     }
 }

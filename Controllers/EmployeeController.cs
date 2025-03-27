@@ -19,6 +19,7 @@ namespace EMS.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddEmployee([FromBody] AddEmployeeDTO employeeDto)
         {
             
@@ -31,6 +32,7 @@ namespace EMS.Controllers
         }
 
         [HttpGet]
+        [Authorize (Roles = "Admin")]
         public async Task<IActionResult> GetAllEmployees()
         {
             var response = await _employeeService.GetAllEmployeesAsync();
@@ -53,9 +55,6 @@ namespace EMS.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEmployee(int id, [FromBody] UdpateEmployeeDTO updateEmployeeDto)
         {
-            var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
-            if (validationResult != null) return validationResult;
-
             var response = await _employeeService.UpdateEmployeeAsync(id, updateEmployeeDto);
             if (!response.Success)
                 return BadRequest(new { message = response.Message });

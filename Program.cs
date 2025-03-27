@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using EMS.Service.EMS.Service;
+using System.Text.Json.Serialization;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,7 +45,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
            .EnableSensitiveDataLogging()  // Optional: This enables logging of parameter values for debugging
            .LogTo(Console.WriteLine, LogLevel.Information) // Log SQL queries to the console
 );
-
+// Add controllers and configure Newtonsoft.Json
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // Add authentication using JWT Bearer Tokens
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -90,13 +98,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseMiddleware<ExceptionHandlingMiddleware>(); // Global error handling
-app.UseMiddleware<ResponseWrapperMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>(); // Global error handling
+//app.UseMiddleware<ResponseWrapperMiddleware>();
 
 
 app.UseHttpsRedirection();
-
-
 
 app.UseStaticFiles(); // Enables serving files from wwwroot
 

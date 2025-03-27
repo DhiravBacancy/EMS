@@ -1,6 +1,8 @@
-﻿using EMS.Models;
+﻿using EMS.Enums;
+using EMS.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Reflection.Emit;
 
 namespace EMS.Configurations
 {
@@ -28,19 +30,19 @@ namespace EMS.Configurations
 
             builder.Property(l => l.Reason)
                 .HasColumnType("TEXT")
-                .IsRequired(false);
+            .IsRequired(false);
 
-            // Store StatusEnum as String (VARCHAR)
             builder.Property(l => l.Status)
-                .HasConversion<string>() // Store enum as string
-                .HasColumnType("VARCHAR(20)")
-                .IsRequired(); // NOT NULL
+                .HasConversion(
+                    v => v.ToString(), // Converts the enum to string for storage in JSON
+                    v => (StatusEnum)Enum.Parse(typeof(StatusEnum), v) // Converts string back to enum when deserializing
+                ).IsRequired(); // NOT NULL
 
-            // Store LeaveTypeEnum as String (VARCHAR)
             builder.Property(l => l.LeaveType)
-                .HasConversion<string>()
-                .HasColumnType("VARCHAR(50)")
-                .IsRequired();
+                .HasConversion(
+                     v => v.ToString(), // Converts the enum to string for storage in JSON
+                    v => (LeaveTypeEnum)Enum.Parse(typeof(LeaveTypeEnum), v) // Converts string back to enum when deserializing
+                ).IsRequired();
         }
     }
 }

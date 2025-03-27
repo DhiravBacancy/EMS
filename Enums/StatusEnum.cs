@@ -1,5 +1,9 @@
-﻿namespace EMS.Enums
+﻿//using Newtonsoft.Json;
+
+
+namespace EMS.Enums
 {
+    //[JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
     public enum StatusEnum
     {
         Pending = 1,
@@ -7,3 +11,4 @@
         Rejected = 3
     }
 }
+

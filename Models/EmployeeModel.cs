@@ -1,5 +1,6 @@
 ﻿using EMS.Enums;
 using System;
+using System.Text.Json.Serialization;
 
 namespace EMS.Models
 {
@@ -21,6 +22,9 @@ namespace EMS.Models
         public int PaidLeavesRemaining { get; set; } = 18;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
+
+        // Use System.Text.Json's JsonStringEnumConverter
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public RolesEnum Role { get; set; } = RolesEnum.Employee;
     }
 }

@@ -9,9 +9,15 @@ namespace EMS.DTOs
         public string Email { get; set; }
 
         [Required]
-        [RegularExpression("^(weekly|monthly)$", ErrorMessage = "Period must be either 'weekly' or 'monthly'.")]
-        public string Period { get; set; } = "monthly"; // Default to "monthly"
+        //[RegularExpression("^(weekly|monthly)$", ErrorMessage = "Period must be either 'weekly' or 'monthly'.")]
+        public string Period { get; set; } = "monthly";
+
+        //public void Normalize()
+        //{
+        //    Period = Period?.Trim().ToLower(); // Ensure consistency in input
+        //}
     }
+
 
     public class EmployeeWorkReportDTO
     {

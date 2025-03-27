@@ -1,4 +1,5 @@
-﻿using EMS.Models;
+﻿using EMS.Enums;
+using EMS.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -70,11 +71,13 @@ namespace EMS.Configurations
             builder.Property(e => e.TechStack)
                 .HasColumnType("TEXT")
                 .IsRequired(false);
-               
+
             builder.Property(e => e.Role)
-                .HasConversion<string>() // Store as string (VARCHAR)
-                .HasMaxLength(20)        // Limit length to 20 (matching enum length)
-                .IsRequired(true);
+                 .HasConversion(
+                    v => v.ToString(), // Store the enum as a string
+                    v => (RolesEnum)Enum.Parse(typeof(RolesEnum), v) // Convert back from string to enum
+                )
+                .IsRequired();
         }
     }
 

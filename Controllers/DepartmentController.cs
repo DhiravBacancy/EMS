@@ -19,7 +19,6 @@ namespace EMS.Controllers
             _departmentService = departmentService;
         }
 
-        // Add Department
         [HttpPost("Add")]
         public async Task<IActionResult> AddDepartment([FromBody] AddOrUpdateDepartmentDTO departmentDto)
         {
@@ -29,8 +28,6 @@ namespace EMS.Controllers
 
             return StatusCode(response.StatusCode, new { message = response.Message });
         }
-
-        // Get All Departments
 
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllDepartments()
@@ -42,7 +39,6 @@ namespace EMS.Controllers
             return StatusCode(response.StatusCode, new { message = response.Message });
         }
 
-        // Get Department by ID
         [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDepartmentById(int id)
@@ -54,7 +50,6 @@ namespace EMS.Controllers
             return StatusCode(response.StatusCode, new { message = response.Message });
         }
 
-        // Update Department
         [HttpPut("Update/{id}")]
         public async Task<IActionResult> UpdateDepartment(int id, [FromBody] AddOrUpdateDepartmentDTO departmentDto)
         {

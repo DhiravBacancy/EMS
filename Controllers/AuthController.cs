@@ -1,9 +1,7 @@
 ﻿using EMS.DTOs;
-using EMS.Helpers;
 using EMS.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace EMS.Controllers
 {
@@ -33,12 +31,14 @@ namespace EMS.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Logout([FromBody] string token)
+        public async Task<IActionResult> Logout()
         {
-            token = token?.Trim('"'); // Fix JSON wrapping issue
+            var authHeader = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
 
-            if (string.IsNullOrEmpty(token))
-                return BadRequest(new { message = "Token is required" });
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+                return BadRequest(new { message = "Authorization token is missing or invalid" });
+
+            var token = authHeader.Substring("Bearer ".Length).Trim();
 
             var logoutResponse = await _authService.LogoutAsync(token);
             if (logoutResponse.Success)
@@ -47,10 +47,13 @@ namespace EMS.Controllers
             return StatusCode(500, new { message = "An error occurred while logging out" });
         }
 
+
+
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO resetPasswordDto)
         {
+
             var resetPasswordResponse = await _authService.PasswordResetAsync(resetPasswordDto);
             if (resetPasswordResponse.Success)
                 return Ok(new { message = "Password reset successful" });
@@ -58,7 +61,7 @@ namespace EMS.Controllers
             return StatusCode(500, new { message = resetPasswordResponse.Message });  // Return error if password reset fails
         }
 
-        
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> ResetPasswordWhenNotLoggedIn([FromBody] string email)
         {
@@ -72,7 +75,7 @@ namespace EMS.Controllers
             return NotFound(new { message = "Email not found" });  // Return 404 if email is not found
         }
 
- 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> VerifyOTP([FromBody] VerifyOTPDTO verifyOtpDto)
         {

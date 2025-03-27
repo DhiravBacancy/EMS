@@ -1,4 +1,5 @@
 ﻿using EMS.Enums;
+using System.Text.Json.Serialization;
 
 namespace EMS.Models
 {
@@ -15,11 +16,12 @@ namespace EMS.Models
 
         public int TotalDays { get; set; }
 
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public LeaveTypeEnum LeaveType { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public StatusEnum Status { get; set; } = StatusEnum.Pending;
 
         public string? Reason { get; set; }
-
-        public StatusEnum Status { get; set; } = StatusEnum.Pending;
 
         public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
     }

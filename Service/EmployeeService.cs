@@ -58,6 +58,7 @@ namespace EMS.Service
         public async Task<ServiceResponse<IEnumerable<Employee>>> GetAllEmployeesAsync()
         {
             var employees = await _employeeService.GetAllAsync();
+
             if (!employees.Any())
                 return ServiceResponse<IEnumerable<Employee>>.FailureResponse("No employees found.", 404);
 

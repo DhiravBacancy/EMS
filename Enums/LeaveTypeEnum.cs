@@ -1,5 +1,8 @@
-﻿namespace EMS.Enums
+﻿//using Newtonsoft.Json;
+
+namespace EMS.Enums
 {
+    //[JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
     public enum LeaveTypeEnum
     {
         SickLeave = 1,
@@ -8,3 +11,4 @@
         UnpaidLeave = 4
     }
 }
+

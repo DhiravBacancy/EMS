@@ -32,7 +32,7 @@ namespace EMS.Service
             var existingLeaves = await _leaveService.GetByMultipleConditionsAsync(
                 new List<FilterDTO>
                 {
-            new FilterDTO { PropertyName = "EmployeeId", Value = addLeaveDto.EmployeeId }
+                    new FilterDTO { PropertyName = "EmployeeId", Value = addLeaveDto.EmployeeId }
                 }
             );
 

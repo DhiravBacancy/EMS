@@ -53,6 +53,7 @@ namespace EMS.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles ="Admin")]
         public async Task<IActionResult> DeleteTimeSheet(int id)
         {
             var response = await _timeSheetService.DeleteTimeSheetAsync(id);

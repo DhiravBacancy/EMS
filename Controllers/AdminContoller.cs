@@ -37,7 +37,7 @@ public class AdminController : Controller
 
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetAdminById(int id)
+    public async Task<IActionResult> GetAdminById([FromQuery] int id)
     {
         // Call the service method and get the response
         var response = await _adminService.GetAdminByIdAsync(id);
@@ -114,13 +114,10 @@ public class AdminController : Controller
         return StatusCode(response.StatusCode, new { message = response.Message });
     }
 
-    [HttpPost("generateEmployeeWorkReport")]
+
+    [HttpGet("generateEmployeeWorkReport")]
     public async Task<IActionResult> GenerateEmployeeWorkReport([FromBody] EmployeeWorkReportRequestDTO request)
     {
-        var validationResult = DTOValidationHelper.ValidateModelState(ModelState);
-        if (validationResult != null) return validationResult;
-
-        // Call the service method and get the response
         var response = await _adminService.GenerateEmployeeWorkReportAsync(request);
 
         // Return appropriate response based on success or failure
