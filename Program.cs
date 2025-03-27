@@ -9,50 +9,37 @@ using System.Text;
 using EMS.Service.EMS.Service;
 using System.Text.Json.Serialization;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<IExportTimesheetsToExcelService, ExportTimesheetsToExcelService>();
-//builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-
-
-//builder.Services.AddScoped<IExportToPDFService, ExportToPDFService>();
-
 builder.Services.AddScoped(typeof(IGenericDBRepository<>), typeof(GenericDBRepository<>));
-//builder.Services.AddScoped(typeof(IGenericDBService<>), typeof(GenericDBService<>));
 
-builder.Services.AddMemoryCache(); // Register IMemoryCache
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<IDepartmentService, DepartmentService>(); 
-builder.Services.AddScoped<IAdminService, AdminService>(); 
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<ITimeSheetService, TimeSheetService>();
-
-// Register IAuthService
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Add DbContext with SQL Server and logging
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .EnableSensitiveDataLogging()  // Optional: This enables logging of parameter values for debugging
-           .LogTo(Console.WriteLine, LogLevel.Information) // Log SQL queries to the console
+           .EnableSensitiveDataLogging()
+           .LogTo(Console.WriteLine, LogLevel.Information)
 );
-// Add controllers and configure Newtonsoft.Json
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
-// Add authentication using JWT Bearer Tokens
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -62,7 +49,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"])),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"] ?? throw new InvalidOperationException("JWT Secret Key is not configured."))),
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
@@ -73,24 +60,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 var authService = context.HttpContext.RequestServices.GetRequiredService<IAuthService>();
                 var token = context.Request.Headers["Authorization"].ToString().Split(" ")[1];
-
                 var response = await authService.IsTokenRevokedAsync(token);
 
-                // Check the success of the response, and fail if the token is revoked
                 if (response.Success && response.Data)
                 {
                     context.Fail("This token has been revoked.");
                 }
             }
         };
-
-
     });
 
-builder.Services.AddControllers();
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -98,17 +79,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<ExceptionHandlingMiddleware>(); // Global error handling
-//app.UseMiddleware<ResponseWrapperMiddleware>();
-
-
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
-
-app.UseStaticFiles(); // Enables serving files from wwwroot
-
-app.UseRouting();       
+app.UseStaticFiles();
+app.UseRouting();
 app.UseAuthentication();
-
 app.UseAuthorization();
 app.MapControllers();
 

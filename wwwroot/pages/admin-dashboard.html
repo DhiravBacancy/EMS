@@ -8,8 +8,8 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background: linear-gradient(to right, #667eea, #764ba2); /* Updated background gradient */
-            color: #fff;
+            background: linear-gradient(to right, #667eea, #764ba2); /* Background gradient with blue and purple */
+/*            color: #fff;*/
             margin: 0;
             padding: 0;
         }
@@ -18,35 +18,35 @@
             max-width: 900px;
             margin: auto;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
+            background: white;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             margin-top: 50px;
         }
 
         h2, h3 {
-            color: #fff; /* Keeping text color as white for headings */
+            color: #333; /* Keeping dark gray for heading text */
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            background: rgba(255, 255, 255, 0.2);
+/*            background: rgba(255, 255, 255, 0.2);*/
         }
 
         table, th, td {
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid #ccc; /* Use solid gray borders for better visibility */
         }
 
         th, td {
             padding: 10px;
             text-align: center;
-            color: #fff;
+            color: #333; /* Dark gray text for better readability */
         }
 
         th {
-            background-color: rgba(255, 255, 255, 0.3);
+            background-color: #667eea; /* Light blue background for table headers */
         }
 
         input, button {
@@ -54,7 +54,7 @@
             padding: 10px;
             margin: 10px 0;
             border-radius: 5px;
-            border: none;
+            border: 1px solid #ccc; /* Subtle gray border */
         }
 
         input {
@@ -63,18 +63,18 @@
         }
 
         button {
-            background-color: #667eea; /* Updated button background color */
+            background-color: #667eea; /* Light blue for primary buttons */
             color: white;
             cursor: pointer;
             transition: background 0.3s;
         }
 
             button:hover {
-                background-color: #5a67d8; /* Updated hover color */
+                background-color: #5a67d8; /* Darker blue on hover */
             }
 
         .logout-button {
-            background-color: #dc3545; /* Retaining red color for logout */
+            background-color: #dc3545; /* Red for logout button */
         }
 
             .logout-button:hover {
@@ -93,7 +93,7 @@
         }
 
         a {
-            color: #667eea; /* Updated link color to match the theme */
+            color: #667eea; /* Light blue for links */
             text-decoration: none;
         }
 
@@ -101,6 +101,7 @@
                 text-decoration: underline;
             }
     </style>
+
 </head>
 <body>
     <div class="container">
@@ -153,27 +154,41 @@
                 return;
             }
 
-            const empId = getAdminIdFromToken(token);
+            const adminId = getAdminIdFromToken(token);
 
-            // Fetch Admin Details
-            const response = await fetch(`/api/Admin/${empId}`, {
+            const response = await fetch(`/api/Admin/GetAdminById?id=${adminId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
-            if (response.ok) {
-                const admin = await response.json();
-                if (admin.data) {
-                    document.getElementById("adminName").innerText = admin.data.firstName + " " + admin.data.lastName;
-                    document.getElementById("adminEmail").innerText = admin.data.email;
+            try {
+                // Check if response is OK
+                if (response.ok) {
+                    const admin = await response.json();
+
+                    // Ensure admin data exists
+                    if (admin.data) {
+                        document.getElementById("adminName").innerText = admin.data.firstName + " " + admin.data.lastName;
+                        document.getElementById("adminEmail").innerText = admin.data.email;
+                    } else {
+                        alert("No admin data found.");
+                    }
                 } else {
-                    alert("No admin data found.");
+                    // Handle unsuccessful response (non-2xx status codes)
+                    let errorMessage = "Unknown error occurred";
+                    try {
+                        const error = await response.json();
+                        errorMessage = error.message || errorMessage;
+                    } catch (error) {
+                        console.error("Failed to parse error response:", error);
+                    }
+                    alert(`Error: ${errorMessage}`);
                 }
-            } else {
-                const error = await response.json();
-                alert(`Error: ${error.message}`);
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
+                alert("An error occurred while processing the response.");
             }
         }
 
@@ -287,8 +302,21 @@
                 return;
             }
 
+            // Assuming you have the token stored in localStorage or obtained from another source
+            const token = localStorage.getItem("token");  // or replace with how you get the token
+
+            if (!token) {
+                alert("Please log in first.");
+                return;
+            }
+
             try {
-                const response = await fetch(`/api/Admin/getEmployeePendingLeaveRequest/${employeeEmail}`);
+                const response = await fetch(`/api/Admin/getEmployeePendingLeaveRequest/${employeeEmail}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -306,8 +334,8 @@
                 console.error("Error fetching pending leaves:", error);
                 alert("Failed to fetch pending leaves.");
             }
-
         }
+
 
         function displayLeaves(leaves) {
             const leaveRequestsDiv = document.getElementById("leaveRequests");
@@ -344,11 +372,25 @@
                 alert("Please enter an employee email.");
                 return;
             }
+
+            // Assuming you have the token stored in localStorage or obtained from another source
+            const token = localStorage.getItem("token");  // or replace with how you get the token
+
+            if (!token) {
+                alert("Please log in first.");
+                return;
+            }
+
             // Encode the email to handle special characters in the URL
             //const encodedEmail = encodeURIComponent(employeeEmail);
             const downloadUrl = `/api/Admin/exportEmployeeTimeSheet/${employeeEmail}`;
 
-            fetch(downloadUrl)
+            fetch(downloadUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -383,10 +425,19 @@
                 period: reportPeriod
             };
 
+            // Assuming you have the token stored in localStorage or obtained from another source
+            const token = localStorage.getItem("token");  // or replace with how you get the token
+
+            if (!token) {
+                alert("Please log in first.");
+                return;
+            }
+
             fetch('/api/Admin/generateEmployeeWorkReport', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`  // Add Bearer token here
                 },
                 body: JSON.stringify(requestBody)
             })
@@ -409,6 +460,7 @@
                     alert('Failed to download report.');
                 });
         }
+
 
         window.onload = () => {
             const token = localStorage.getItem("token");

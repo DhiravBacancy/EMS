@@ -36,7 +36,7 @@ public class AdminController : Controller
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet("GetAdminById")]
     public async Task<IActionResult> GetAdminById([FromQuery] int id)
     {
         // Call the service method and get the response
@@ -115,7 +115,7 @@ public class AdminController : Controller
     }
 
 
-    [HttpGet("generateEmployeeWorkReport")]
+    [HttpPost("generateEmployeeWorkReport")]
     public async Task<IActionResult> GenerateEmployeeWorkReport([FromBody] EmployeeWorkReportRequestDTO request)
     {
         var response = await _adminService.GenerateEmployeeWorkReportAsync(request);

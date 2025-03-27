@@ -43,6 +43,17 @@ The Employee Management System is a robust, secure, and feature-rich application
 - **JWT Authentication:** Implements secure login and authorization for both employees and admins.
 - **RESTful API Principles:** The API uses proper HTTP status codes and adheres to REST best practices.
 
+## Basic Frontend Pages
+
+### Login Page
+![](./FrontendPages/Login.png)
+---
+### Admin Dashboard Page
+![](./FrontendPages/Admin%20Dashboard.png)
+---
+### Employee Dashboard Page
+![](./FrontendPages/Employee%20Dashboard.png)
+---
 ## Setup and Installation
 
 1. **Clone the Repository:**
